@@ -1,0 +1,2 @@
+copy g:\hexo\source\_posts g:\OneDrive\post
+pause

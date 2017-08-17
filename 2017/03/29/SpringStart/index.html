@@ -1,0 +1,804 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spring,Tomcat," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指">
+<meta name="keywords" content="Spring,Tomcat">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漫谈Spring的启动与初始化（一）">
+<meta property="og:url" content="https://zouzls.github.io/2017/03/29/SpringStart/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image002.jpg">
+<meta property="og:image" content="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image004.jpg">
+<meta property="og:updated_time" content="2017-08-06T16:23:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="漫谈Spring的启动与初始化（一）">
+<meta name="twitter:description" content="最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指">
+<meta name="twitter:image" content="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image002.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> 漫谈Spring的启动与初始化（一） | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                漫谈Spring的启动与初始化（一）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2017-03-29T13:33:48+08:00" content="2017-03-29">
+              2017-03-29
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Web/" itemprop="url" rel="index">
+                    <span itemprop="name">Web</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/03/29/SpringStart/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/03/29/SpringStart/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/03/29/SpringStart/" class="leancloud_visitors" data-flag-title="漫谈Spring的启动与初始化（一）">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指出。</p>
+<h3 id="从Tomcat启动开始"><a href="#从Tomcat启动开始" class="headerlink" title="从Tomcat启动开始"></a>从Tomcat启动开始</h3><p>查阅了大部分网上的文章，基本90%的都是直接从ContextLoaderListener这个监听器开始谈起，说ContextLoaderListener监听到了ServletContext的启动然后balabala开始启动容器了，但是我想知道监听器是什么时候来的啊，一切总是有个开始的，不能说有个监听器就有个监听器了吧。<br><a id="more"></a></p>
+<h4 id="初始Tomcat的基本结构"><a href="#初始Tomcat的基本结构" class="headerlink" title="初始Tomcat的基本结构"></a>初始Tomcat的基本结构</h4><p>因为web最终是运行在类似于Tomcat这种web容器里面的，它对于web的生命周期应该有着直接的关系，所以我决定从Tomcat开始看起，下面是Tomcat的容器模型：<br><img src="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image002.jpg" alt=""><br><strong>从上图可以看出 Tomcat 的容器分为四个等级，真正管理 Servlet 的容器是 Context 容器，一个 Context 对应一个 Web 工程。</strong>尤其是后面一句话，一个 Context 对应一个 Web 工程，所以我们在Tomcat根目录的webapps文件夹路径下面经常会看到除了我们自己部署的web，还有若干其他Tomcat自带的web，不同的web工程都会对应在Tomcat里面的context容器。</p>
+<h4 id="Tomcat的启动"><a href="#Tomcat的启动" class="headerlink" title="Tomcat的启动"></a>Tomcat的启动</h4><p>先看这张图，Tomcat主要类的启动时序图：<br><img src="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image004.jpg" alt=""><br>可以看到Tomcat的启动是从顶层开始一直到到Engine到Host再到StandardContext（这里的context我可以理解为就是对应每个web工程的容器了），之前看过一些Tomcat的源码，Tomcat是采用了一种观察者模式的设计方式，所有的容器都会继承 Lifecycle 接口，它管理容器的整个生命周期，所有容器的的修改和状态的改变都会由它去通知已经注册的观察者（Listener）。不清楚的可以参考<a href="http://zouzls.github.io/2016/07/05/Tomcat%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86/">Tomcat生命周期管理</a>。<br>说了这么多还没到我们配置在web.xml里面的监听器，快了。当 Context 容器初始化状态设为 init 时，添加在 Context 容器的 Listener 将会被调用。ContextConfig 继承了 LifecycleListener 接口，ContextConfig 类会负责整个 Web 应用的配置文件的解析工作。</p>
+<h4 id="web应用的初始化"><a href="#web应用的初始化" class="headerlink" title="web应用的初始化"></a>web应用的初始化</h4><p>Web 应用的初始化工作是在 ContextConfig 的 configureStart 方法中实现的，应用的初始化主要是要解析 web.xml 文件，这个文件描述了一个 Web 应用的关键信息，也是一个 Web 应用的入口。<strong>web.xml 文件中的各个配置项将会被解析成相应的属性保存在 WebXml 对象中，接下去将会将 WebXml 对象中的属性设置到 Context 容器中，这里包括创建 Servlet 对象、filter、listener 等等。</strong><br>所有 web.xml 属性都被解析到 Context 中，所以说 Context 容器才是真正运行 Servlet 的 Servlet 容器。一个 Web 应用对应一个 Context 容器，容器的配置属性由应用的 web.xml 指定，这样我们就能理解 web.xml 到底起到什么作用了。</p>
+<h3 id="再谈Spring的启动"><a href="#再谈Spring的启动" class="headerlink" title="再谈Spring的启动"></a>再谈Spring的启动</h3><h4 id="启动Spring之前"><a href="#启动Spring之前" class="headerlink" title="启动Spring之前"></a>启动Spring之前</h4><p>从上面的流程中，我们知道web.xml配置的最常见的ContextLoaderListener监听器是从Tomcat启动时候创建的。根据以上Tomcat的启动背景，我们先尝试简单梳理从Tomcat读取web.xml配置文件到启动Spring的一系列流程。</p>
+<ol>
+<li>在启动Web项目时，容器比如Tomcat会读web.xml配置文件中所有的属性，包括contextConfigLocation和ContextLoaderListener这些等等。</li>
+<li>接着Tomcat会创建一个ServletContext(这里的ServletContext可以理解为上述每个web应用对应的Context容器),应用范围内即整个web项目都能使用这个上下文。</li>
+<li>Tomcat将刚刚读取到contextConfigLocation和ContextLoaderListener这些web.xml中的参数键值对交给ServletContext。</li>
+<li><p>创建web.xml 中配置的监听器类Listener。在监听器类中必须要实现ServletContextListener接口，接口源代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ServletContextListener</span> <span class="keyword">extends</span> <span class="title">EventListener</span> </span>&#123;</div><div class="line">    <span class="comment">//初始化Spring容器</span></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">contextInitialized</span><span class="params">(ServletContextEvent var1)</span></span>;</div><div class="line">    <span class="comment">//用于关闭应用前释放资源，比如说数据库连接的关闭。</span></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">contextDestroyed</span><span class="params">(ServletContextEvent var1)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>注意,这个时候才刚刚开始，你的web项目还没有完全启动完成，包括Spring还没启动。</p>
+</li>
+</ol>
+<h4 id="由ContextLoaderListener监听器启动Spring"><a href="#由ContextLoaderListener监听器启动Spring" class="headerlink" title="由ContextLoaderListener监听器启动Spring"></a>由ContextLoaderListener监听器启动Spring</h4><p>因为ContextLoaderListener实现了用来监听ServletContext事件的ServletContextListener 这个接口，如果 ServletContext 状态发生变化，将会触发产生对应的ServletContextEvent，然后调用监听器的不同的方法。ContextLoaderListener结构如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ContextLoaderListener</span> <span class="keyword">extends</span> <span class="title">ContextLoader</span> <span class="keyword">implements</span> <span class="title">ServletContextListener</span> </span>&#123;</div><div class="line">    ...</div><div class="line">    <span class="comment">//实现了ServletContextListener的初始化接口</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">contextInitialized</span><span class="params">(ServletContextEvent event)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.initWebApplicationContext(event.getServletContext());</div><div class="line">    &#125;</div><div class="line">    <span class="comment">//同上</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">contextDestroyed</span><span class="params">(ServletContextEvent event)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.closeWebApplicationContext(event.getServletContext());</div><div class="line">        ContextCleanupListener.cleanupAttributes(event.getServletContext());</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>最终上面的initWebApplicationContext由ContextLoader来完成，这个时候就真正开始了Spring容器的初始化了，真是个激动人心的时刻，百转千回。<br>下文将仔细介绍<code>initWebApplicationContext</code>是如何进行初始化的。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/" target="_blank" rel="external">Servlet 工作原理解析</a><br><a href="http://www.cnblogs.com/handsome1013/p/5209109.html" target="_blank" rel="external">spring项目中监听器作用-ContextLoaderListener</a></p>
+<p>-EOF-</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spring/" rel="tag">#Spring</a>
+          
+            <a href="/tags/Tomcat/" rel="tag">#Tomcat</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/03/26/ThreadPoolExecutor/" rel="next" title="ThreadPoolExecutor线程池源码分析">
+                <i class="fa fa-chevron-left"></i> ThreadPoolExecutor线程池源码分析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/04/16/git-branch-manage/" rel="prev" title="Git分支管理小团队实践">
+                Git分支管理小团队实践 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/03/29/SpringStart/"
+           data-title="漫谈Spring的启动与初始化（一）" data-url="https://zouzls.github.io/2017/03/29/SpringStart/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#从Tomcat启动开始"><span class="nav-number">1.</span> <span class="nav-text">从Tomcat启动开始</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#初始Tomcat的基本结构"><span class="nav-number">1.1.</span> <span class="nav-text">初始Tomcat的基本结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Tomcat的启动"><span class="nav-number">1.2.</span> <span class="nav-text">Tomcat的启动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#web应用的初始化"><span class="nav-number">1.3.</span> <span class="nav-text">web应用的初始化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#再谈Spring的启动"><span class="nav-number">2.</span> <span class="nav-text">再谈Spring的启动</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#启动Spring之前"><span class="nav-number">2.1.</span> <span class="nav-text">启动Spring之前</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#由ContextLoaderListener监听器启动Spring"><span class="nav-number">2.2.</span> <span class="nav-text">由ContextLoaderListener监听器启动Spring</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

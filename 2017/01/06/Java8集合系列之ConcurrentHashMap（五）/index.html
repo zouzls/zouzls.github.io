@@ -1,0 +1,820 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="concurrent,collection," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="Before JDK1.8版本Hashtable我们都知道HashMap是线程不安全的。Hashtable是线程安全的。看过Hashtable源码的我们都知道Hashtable的线程安全是采用在每个方法来添加了synchronized关键字来修饰，即Hashtable是针对整个table的锁定，这样就导致HashTable容器在竞争激烈的并发环境下表现出效率低下。翻阅Hashtable的源码，确实">
+<meta name="keywords" content="concurrent,collection">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java8集合系列之ConcurrentHashMap（五）">
+<meta property="og:url" content="https://zouzls.github.io/2017/01/06/Java8集合系列之ConcurrentHashMap（五）/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="Before JDK1.8版本Hashtable我们都知道HashMap是线程不安全的。Hashtable是线程安全的。看过Hashtable源码的我们都知道Hashtable的线程安全是采用在每个方法来添加了synchronized关键字来修饰，即Hashtable是针对整个table的锁定，这样就导致HashTable容器在竞争激烈的并发环境下表现出效率低下。翻阅Hashtable的源码，确实">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/QQ%E6%88%AA%E5%9B%BE20170216122340.png">
+<meta property="og:updated_time" content="2017-08-03T08:41:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java8集合系列之ConcurrentHashMap（五）">
+<meta name="twitter:description" content="Before JDK1.8版本Hashtable我们都知道HashMap是线程不安全的。Hashtable是线程安全的。看过Hashtable源码的我们都知道Hashtable的线程安全是采用在每个方法来添加了synchronized关键字来修饰，即Hashtable是针对整个table的锁定，这样就导致HashTable容器在竞争激烈的并发环境下表现出效率低下。翻阅Hashtable的源码，确实">
+<meta name="twitter:image" content="http://oaewlsdmg.bkt.clouddn.com/QQ%E6%88%AA%E5%9B%BE20170216122340.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> Java8集合系列之ConcurrentHashMap（五） | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java8集合系列之ConcurrentHashMap（五）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2017-01-06T22:46:13+08:00" content="2017-01-06">
+              2017-01-06
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Java-Collection/" itemprop="url" rel="index">
+                    <span itemprop="name">Java Collection</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/01/06/Java8集合系列之ConcurrentHashMap（五）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/01/06/Java8集合系列之ConcurrentHashMap（五）/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/01/06/Java8集合系列之ConcurrentHashMap（五）/" class="leancloud_visitors" data-flag-title="Java8集合系列之ConcurrentHashMap（五）">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Before-JDK1-8版本"><a href="#Before-JDK1-8版本" class="headerlink" title="Before JDK1.8版本"></a>Before JDK1.8版本</h3><h4 id="Hashtable"><a href="#Hashtable" class="headerlink" title="Hashtable"></a>Hashtable</h4><p>我们都知道HashMap是线程不安全的。Hashtable是线程安全的。看过Hashtable源码的我们都知道Hashtable的线程安全是采用在每个方法来添加了synchronized关键字来修饰，即Hashtable是针对整个table的锁定，这样就导致HashTable容器在竞争激烈的并发环境下表现出效率低下。翻阅Hashtable的源码，确实在put和get方法之前都添加了synchronized来完成同步操作，这样无论是在put还是get的时候只能同时进行一种操作，毫无疑问这种效率是极其低下的。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> V <span class="title">put</span><span class="params">(K key, V value)</span> </span>&#123;</div><div class="line">    ...</div><div class="line">&#125;</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> V <span class="title">get</span><span class="params">(Object key)</span> </span>&#123;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="锁分离技术"><a href="#锁分离技术" class="headerlink" title="锁分离技术"></a>锁分离技术</h4><p>基于Hashtable的缺点，人们就开始思考，假如容器里有多把锁，每一把锁用于锁容器其中一部分数据，那么当多线程访问容器里不同数据段的数据时，线程间就不会存在锁竞争，从而可以有效的提高并发访问效率呢？？这就是我们的“锁分离”技术，这也是ConcurrentHashMap实现的基础。</p>
+<p>ConcurrentHashMap使用的就是锁分段技术，ConcurrentHashMap由多个Segment组成(Segment下包含很多Node，也就是我们的键值对了)，每个Segment都有把锁来实现线程安全，当一个线程占用锁访问其中一个段数据的时候，其他段的数据也能被其他线程访问。<br><a id="more"></a></p>
+<h3 id="ConcurrentHashMap-JDK1-8"><a href="#ConcurrentHashMap-JDK1-8" class="headerlink" title="ConcurrentHashMap JDK1.8"></a>ConcurrentHashMap JDK1.8</h3><h4 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h4><ol>
+<li>JDK1.8的ConcurrentHashMap中Segment虽保留，但已经简化属性，仅仅是为了兼容旧版本。</li>
+<li>ConcurrentHashMap的底层与Java1.8的HashMap有相通之处，底层依然由“数组”+链表+红黑树来实现的，底层结构存放的是TreeBin对象，而不是TreeNode对象。 </li>
+<li>ConcurrentHashMap实现中借用了较多的<a href="http://zouzls.github.io/2017/01/26/CAS%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C/">CAS算法</a>，unsafe.compareAndSwapInt(this, valueOffset, expect, update); CAS(Compare And Swap)。<br>ConcurrentHashMap既然借助了CAS来实现非阻塞的无锁实现线程安全，那么是不是就没有用锁了呢？<strong>在操作hash值相同的链表的头结点还是会synchronized上锁</strong>，这样才能保证线程安全。因为修改链表头结点会涉及到一系列的操作，这些操作必须要保证原子性。</li>
+</ol>
+<h4 id="重要属性"><a href="#重要属性" class="headerlink" title="重要属性"></a>重要属性</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** </span></div><div class="line"><span class="comment"> * 盛装Node元素的数组 它的大小是2的整数次幂 </span></div><div class="line"><span class="comment"> * Size is always a power of two. Accessed directly by iterators. </span></div><div class="line"><span class="comment"> */</span>  </div><div class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> Node&lt;K,V&gt;[] table;  </div><div class="line"><span class="comment">//默认容量</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DEFAULT_CAPACITY = <span class="number">16</span>;</div><div class="line"><span class="comment">/** </span></div><div class="line"><span class="comment"> * hash表初始化或扩容时的一个控制位标识量。 </span></div><div class="line"><span class="comment"> * 负数代表正在进行初始化或扩容操作 </span></div><div class="line"><span class="comment"> * -1代表正在初始化 </span></div><div class="line"><span class="comment"> * -N 表示有N-1个线程正在进行扩容操作 </span></div><div class="line"><span class="comment"> * 正数或0代表hash表还没有被初始化，这个数值表示初始化或下一次进行扩容的大小,这一点类似于扩容阈值的概念。还后面可以看到，它的值始终是当前ConcurrentHashMap容量的0.75倍，这与loadfactor是对应的。</span></div><div class="line"><span class="comment"> */</span>  </div><div class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">int</span> sizeCtl; <span class="comment">//volatile变量</span></div></pre></td></tr></table></figure>
+<h4 id="Node-TreeNode-TreeBin"><a href="#Node-TreeNode-TreeBin" class="headerlink" title="Node/TreeNode/TreeBin"></a>Node/TreeNode/TreeBin</h4><ul>
+<li>Node类<br>Node是最核心的内部类，它包装了key-value键值对，所有插入ConcurrentHashMap的数据都包装在这里面。它与HashMap中的定义很相似，但是但是有一些差别就是value和next设置成了volatile变量，不允许调用setValue方法直接改变Node的value域，它增加了find方法辅助map.get()方法。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//1.Node类是没有提供修改入口的(setValue方法抛异常，供子类实现)，即是可读的。只能用于只读遍历。</span></div><div class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">implements</span> <span class="title">Map</span>.<span class="title">Entry</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">final</span> <span class="keyword">int</span> hash;</div><div class="line">    <span class="keyword">final</span> K key;</div><div class="line">    <span class="keyword">volatile</span> V val;<span class="comment">//2.volatile，保证可见性</span></div><div class="line">    <span class="keyword">volatile</span> Node&lt;K,V&gt; next;</div><div class="line"></div><div class="line">    Node(<span class="keyword">int</span> hash, K key, V val, Node&lt;K,V&gt; next) &#123;</div><div class="line">        <span class="keyword">this</span>.hash = hash;</div><div class="line">        <span class="keyword">this</span>.key = key;</div><div class="line">        <span class="keyword">this</span>.val = val;</div><div class="line">        <span class="keyword">this</span>.next = next;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> K <span class="title">getKey</span><span class="params">()</span>       </span>&#123; <span class="keyword">return</span> key; &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> V <span class="title">getValue</span><span class="params">()</span>     </span>&#123; <span class="keyword">return</span> val; &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">hashCode</span><span class="params">()</span>   </span>&#123; <span class="keyword">return</span> key.hashCode() ^ val.hashCode(); &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> String <span class="title">toString</span><span class="params">()</span></span>&#123; <span class="keyword">return</span> key + <span class="string">"="</span> + val; &#125;</div><div class="line">    <span class="comment">//3.setValue跑出异常</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> V <span class="title">setValue</span><span class="params">(V value)</span> </span>&#123;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object o)</span> </span>&#123;</div><div class="line">        Object k, v, u; Map.Entry&lt;?,?&gt; e;</div><div class="line">        <span class="keyword">return</span> ((o <span class="keyword">instanceof</span> Map.Entry) &amp;&amp;</div><div class="line">                (k = (e = (Map.Entry&lt;?,?&gt;)o).getKey()) != <span class="keyword">null</span> &amp;&amp;</div><div class="line">                (v = e.getValue()) != <span class="keyword">null</span> &amp;&amp;</div><div class="line">                (k == key || k.equals(key)) &amp;&amp;</div><div class="line">                (v == (u = val) || v.equals(u)));</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function">Node&lt;K,V&gt; <span class="title">find</span><span class="params">(<span class="keyword">int</span> h, Object k)</span> </span>&#123;</div><div class="line">        Node&lt;K,V&gt; e = <span class="keyword">this</span>;</div><div class="line">        <span class="keyword">if</span> (k != <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">do</span> &#123;</div><div class="line">                K ek;</div><div class="line">                <span class="keyword">if</span> (e.hash == h &amp;&amp;</div><div class="line">                    ((ek = e.key) == k || (ek != <span class="keyword">null</span> &amp;&amp; k.equals(ek))))</div><div class="line">                    <span class="keyword">return</span> e;</div><div class="line">            &#125; <span class="keyword">while</span> ((e = e.next) != <span class="keyword">null</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>TreeNode类<br>树节点类，另外一个核心的数据结构。当链表长度过长的时候，会转换为TreeNode。但是与HashMap不相同的是，它并不是直接转换为红黑树，而是把每个Node结点包装成TreeNode，然后将这些TreeNode放在一个TreeBin对象中，由TreeBin完成对红黑树的包装。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">TreeNode</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; <span class="keyword">extends</span> <span class="title">Node</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt; </span>&#123;</div><div class="line">    TreeNode&lt;K,V&gt; parent;  <span class="comment">// red-black tree links</span></div><div class="line">    TreeNode&lt;K,V&gt; left;</div><div class="line">    TreeNode&lt;K,V&gt; right;</div><div class="line">    TreeNode&lt;K,V&gt; prev;    <span class="comment">// needed to unlink next upon deletion</span></div><div class="line">    <span class="keyword">boolean</span> red;</div><div class="line"></div><div class="line">    TreeNode(<span class="keyword">int</span> hash, K key, V val, Node&lt;K,V&gt; next,</div><div class="line">             TreeNode&lt;K,V&gt; parent) &#123;</div><div class="line">        <span class="comment">//此处调用了Node的构造方法，实际还是一个Node</span></div><div class="line">        <span class="keyword">super</span>(hash, key, val, next);</div><div class="line">        <span class="keyword">this</span>.parent = parent;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function">Node&lt;K,V&gt; <span class="title">find</span><span class="params">(<span class="keyword">int</span> h, Object k)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> findTreeNode(h, k, <span class="keyword">null</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="comment">//根据key找到所属的TreeNode</span></div><div class="line">    <span class="function"><span class="keyword">final</span> TreeNode&lt;K,V&gt; <span class="title">findTreeNode</span><span class="params">(<span class="keyword">int</span> h, Object k, Class&lt;?&gt; kc)</span> </span>&#123;</div><div class="line">        ...</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>TreeBin类<br>这个类并不负责包装用户的key、value信息，而是包装的很多TreeNode节点。它代替了TreeNode的根节点，也就是说在实际的ConcurrentHashMap“数组”中，存放的是TreeBin对象，而不是TreeNode对象，这是与HashMap的区别。另外这个类还带有了读写锁。<br>下图是整个TreeBin类的结构图：</li>
+</ul>
+<p><img src="http://oaewlsdmg.bkt.clouddn.com/QQ%E6%88%AA%E5%9B%BE20170216122340.png" alt=""><br>TreeBin类中除了TreeBin构造方法，还有rotateLeft、rotateRight和balanceInsertion等，这些概念我们在数据结构中应该接触过，另外，还有lockRoot、unlockRoot方法，是为了树在restructuring的时候，进行写锁保护（write lock）。<br>下面主要来看看TreeBin构造方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">TreeNode&lt;K,V&gt; root;<span class="comment">//TreeBin指向红黑树的根节点</span></div><div class="line"><span class="keyword">volatile</span> TreeNode&lt;K,V&gt; first;</div><div class="line"><span class="comment">/**</span></div><div class="line"><span class="comment"> * Creates bin with initial set of nodes headed by b.</span></div><div class="line"><span class="comment"> */</span></div><div class="line">TreeBin(TreeNode&lt;K,V&gt; b) &#123;</div><div class="line">    <span class="keyword">super</span>(TREEBIN, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);<span class="comment">//hash = TREEBIN   = -2;</span></div><div class="line">    <span class="keyword">this</span>.first = b;</div><div class="line">    TreeNode&lt;K,V&gt; r = <span class="keyword">null</span>;</div><div class="line">    <span class="keyword">for</span> (TreeNode&lt;K,V&gt; x = b, next; x != <span class="keyword">null</span>; x = next) &#123;</div><div class="line">        next = (TreeNode&lt;K,V&gt;)x.next;<span class="comment">//next指向x的下一个结点</span></div><div class="line">        x.left = x.right = <span class="keyword">null</span>;</div><div class="line">        <span class="keyword">if</span> (r == <span class="keyword">null</span>) &#123;</div><div class="line">            x.parent = <span class="keyword">null</span>;</div><div class="line">            x.red = <span class="keyword">false</span>;</div><div class="line">            r = x;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">else</span> &#123;</div><div class="line">            K k = x.key;</div><div class="line">            <span class="keyword">int</span> h = x.hash;</div><div class="line">            Class&lt;?&gt; kc = <span class="keyword">null</span>;</div><div class="line">            <span class="keyword">for</span> (TreeNode&lt;K,V&gt; p = r;;) &#123;</div><div class="line">                <span class="keyword">int</span> dir, ph;</div><div class="line">                K pk = p.key;</div><div class="line">                <span class="keyword">if</span> ((ph = p.hash) &gt; h)</div><div class="line">                    dir = -<span class="number">1</span>;</div><div class="line">                <span class="keyword">else</span> <span class="keyword">if</span> (ph &lt; h)</div><div class="line">                    dir = <span class="number">1</span>;</div><div class="line">                <span class="keyword">else</span> <span class="keyword">if</span> ((kc == <span class="keyword">null</span> &amp;&amp;</div><div class="line">                          (kc = comparableClassFor(k)) == <span class="keyword">null</span>) ||</div><div class="line">                         (dir = compareComparables(kc, k, pk)) == <span class="number">0</span>)</div><div class="line">                    dir = tieBreakOrder(k, pk);</div><div class="line">                    TreeNode&lt;K,V&gt; xp = p;</div><div class="line">                <span class="keyword">if</span> ((p = (dir &lt;= <span class="number">0</span>) ? p.left : p.right) == <span class="keyword">null</span>) &#123;</div><div class="line">                    x.parent = xp;</div><div class="line">                    <span class="keyword">if</span> (dir &lt;= <span class="number">0</span>)</div><div class="line">                        xp.left = x;</div><div class="line">                    <span class="keyword">else</span></div><div class="line">                        xp.right = x;</div><div class="line">                    r = balanceInsertion(r, x);</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">this</span>.root = r;</div><div class="line">    <span class="function"><span class="keyword">assert</span> <span class="title">checkInvariants</span><span class="params">(root)</span></span>;<span class="comment">//检查红黑树的合法性</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="Unsafe与CAS"><a href="#Unsafe与CAS" class="headerlink" title="Unsafe与CAS"></a>Unsafe与CAS</h4><p>在ConcurrentHashMap中，随处可以看到U, 大量使用了U.compareAndSwapXXX的方法，这个方法是利用一个CAS算法实现无锁化的修改值的操作，他可以大大降低锁带来的性能消耗。这个算法的基本思想就是不断地去比较当前内存中的变量值与你指定的一个变量值是否相等，如果相等，则接受你指定的修改的值，否则拒绝你的操作。CAS的详细可以参见<a href="http://zouzls.github.io/2017/01/26/CAS%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C/">CAS原子操作</a>.<br>下面是基于CAS的对指定位置数据的修改方法，分别是调用的U的三个原子操作：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//获得在i位置上的Node节点  </span></div><div class="line"><span class="keyword">static</span> <span class="keyword">final</span> &lt;K,V&gt; <span class="function">Node&lt;K,V&gt; <span class="title">tabAt</span><span class="params">(Node&lt;K,V&gt;[] tab, <span class="keyword">int</span> i)</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> (Node&lt;K,V&gt;)U.getObjectVolatile(tab, ((<span class="keyword">long</span>)i &lt;&lt; ASHIFT) + ABASE);</div><div class="line">&#125;</div><div class="line"><span class="comment">//利用CAS算法设置i位置上的Node节点。这个方法是CAS原子操作的典型应用。</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">final</span> &lt;K,V&gt; <span class="function"><span class="keyword">boolean</span> <span class="title">casTabAt</span><span class="params">(Node&lt;K,V&gt;[] tab, <span class="keyword">int</span> i,</span></span></div><div class="line"><span class="function"><span class="params">                                    Node&lt;K,V&gt; c, Node&lt;K,V&gt; v)</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> U.compareAndSwapObject(tab, ((<span class="keyword">long</span>)i &lt;&lt; ASHIFT) + ABASE, c, v);</div><div class="line">&#125;</div><div class="line"><span class="comment">//设置结点</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">final</span> &lt;K,V&gt; <span class="function"><span class="keyword">void</span> <span class="title">setTabAt</span><span class="params">(Node&lt;K,V&gt;[] tab, <span class="keyword">int</span> i, Node&lt;K,V&gt; v)</span> </span>&#123;</div><div class="line">    U.putObjectVolatile(tab, ((<span class="keyword">long</span>)i &lt;&lt; ASHIFT) + ABASE, v);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="initTable"><a href="#initTable" class="headerlink" title="initTable"></a>initTable</h4><p>对于ConcurrentHashMap来说，调用它的构造方法仅仅是设置了一些参数而已。而整个table的初始化是在向ConcurrentHashMap中插入元素的时候发生的。如调用put、computeIfAbsent、compute、merge等方法的时候，调用时机是检查table==null。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">final</span> Node&lt;K,V&gt;[] initTable() &#123;</div><div class="line">    Node&lt;K,V&gt;[] tab; <span class="keyword">int</span> sc;</div><div class="line">    <span class="keyword">while</span> ((tab = table) == <span class="keyword">null</span> || tab.length == <span class="number">0</span>) &#123;</div><div class="line">        <span class="comment">//sizeCtl表示有其他线程正在进行初始化操作，把线程挂起。对于table的初始化工作，只能有一个线程在进行。</span></div><div class="line">        <span class="keyword">if</span> ((sc = sizeCtl) &lt; <span class="number">0</span>)</div><div class="line">            Thread.yield(); <span class="comment">// lost initialization race; just spin</span></div><div class="line">        <span class="comment">//利用CAS方法把sizectl的值置为-1 表示本线程正在进行初始化</span></div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (U.compareAndSwapInt(<span class="keyword">this</span>, SIZECTL, sc, -<span class="number">1</span>)) &#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                <span class="keyword">if</span> ((tab = table) == <span class="keyword">null</span> || tab.length == <span class="number">0</span>) &#123;</div><div class="line">                    <span class="keyword">int</span> n = (sc &gt; <span class="number">0</span>) ? sc : DEFAULT_CAPACITY;</div><div class="line">                    <span class="meta">@SuppressWarnings</span>(<span class="string">"unchecked"</span>)</div><div class="line">                    Node&lt;K,V&gt;[] nt = (Node&lt;K,V&gt;[])<span class="keyword">new</span> Node&lt;?,?&gt;[n];</div><div class="line">                    table = tab = nt;</div><div class="line">                    sc = n - (n &gt;&gt;&gt; <span class="number">2</span>);<span class="comment">//sc=容量*0.75</span></div><div class="line">                &#125;</div><div class="line">            &#125; <span class="keyword">finally</span> &#123;</div><div class="line">                sizeCtl = sc;<span class="comment">//sizeCtl设置sc</span></div><div class="line">            &#125;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> tab;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="put"><a href="#put" class="headerlink" title="put"></a>put</h4><p>前面的所有的介绍其实都为这个方法做铺垫。ConcurrentHashMap最常用的就是put和get两个方法，<strong>不允许key或value为null的情况放入</strong>，这一点跟HashMap相反。整体流程就是对于每一个放入的值，首先利用spread方法对key的hashcode进行一次hash计算，由此来确定这个值在table中的位置。</p>
+<ul>
+<li>如果这个位置是空的，那么直接放入，而且不需要加锁操作。</li>
+<li>如果这个位置不是空的，存在结点，先要加锁，也说明发生了hash碰撞，首先判断这个节点的类型。<ul>
+<li>如果是链表结点Node（fh&gt;0）,则得到的结点就是hash值相同的节点组成的链表的头节点。需要依次向后遍历确定这个新加入的值所在位置。如果遇到hash值与key值都与新加入节点是一致的情况，则只需要更新value值即可。否则依次向后遍历，直到链表尾插入这个结点。如果加入这个节点以后链表长度大于8，就把这个链表转换成红黑树。</li>
+<li>如果这个节点的类型已经是树节点的话，直接调用树节点的插入方法进行插入新的值。</li>
+</ul>
+</li>
+</ul>
+<p>源码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> V <span class="title">put</span><span class="params">(K key, V value)</span> </span>&#123;  </div><div class="line">    <span class="keyword">return</span> putVal(key, value, <span class="keyword">false</span>);  </div><div class="line">&#125;  </div><div class="line">  </div><div class="line"><span class="comment">/** Implementation for put and putIfAbsent */</span>  </div><div class="line"><span class="function"><span class="keyword">final</span> V <span class="title">putVal</span><span class="params">(K key, V value, <span class="keyword">boolean</span> onlyIfAbsent)</span> </span>&#123;  </div><div class="line">        <span class="comment">//不允许 key或value为null  </span></div><div class="line">    <span class="keyword">if</span> (key == <span class="keyword">null</span> || value == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();  </div><div class="line">    <span class="comment">//计算hash值  </span></div><div class="line">    <span class="keyword">int</span> hash = spread(key.hashCode());  </div><div class="line">    <span class="keyword">int</span> binCount = <span class="number">0</span>;  </div><div class="line">    <span class="comment">//死循环 何时插入成功 何时跳出  </span></div><div class="line">    <span class="keyword">for</span> (Node&lt;K,V&gt;[] tab = table;;) &#123;  </div><div class="line">        Node&lt;K,V&gt; f; <span class="keyword">int</span> n, i, fh;  </div><div class="line">        <span class="comment">//如果table为空的话，初始化table  </span></div><div class="line">        <span class="keyword">if</span> (tab == <span class="keyword">null</span> || (n = tab.length) == <span class="number">0</span>)  </div><div class="line">            tab = initTable();  </div><div class="line">        <span class="comment">//根据hash值计算出在table里面的位置   </span></div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span> ((f = tabAt(tab, i = (n - <span class="number">1</span>) &amp; hash)) == <span class="keyword">null</span>) &#123;  </div><div class="line">            <span class="comment">//如果这个位置没有值 ，直接放进去，不需要加锁  </span></div><div class="line">            <span class="keyword">if</span> (casTabAt(tab, i, <span class="keyword">null</span>,  </div><div class="line">                         <span class="keyword">new</span> Node&lt;K,V&gt;(hash, key, value, <span class="keyword">null</span>)))  </div><div class="line">                <span class="keyword">break</span>;  <span class="comment">// no lock when adding to empty bin  </span></div><div class="line">        &#125;  </div><div class="line">        <span class="comment">//当遇到表连接点时，需要进行整合表的操作  </span></div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span> ((fh = f.hash) == MOVED)  </div><div class="line">            tab = helpTransfer(tab, f);  </div><div class="line">        <span class="keyword">else</span> &#123;  </div><div class="line">            V oldVal = <span class="keyword">null</span>;  </div><div class="line">            <span class="comment">//结点上锁  这里的结点可以理解为hash值相同组成的链表的头结点  </span></div><div class="line">            <span class="keyword">synchronized</span> (f) &#123;  </div><div class="line">                <span class="keyword">if</span> (tabAt(tab, i) == f) &#123;  </div><div class="line">                    <span class="comment">//fh&gt;0 说明这个节点是一个链表的节点 不是树的节点  </span></div><div class="line">                    <span class="keyword">if</span> (fh &gt;= <span class="number">0</span>) &#123;  </div><div class="line">                        binCount = <span class="number">1</span>;  </div><div class="line">                        <span class="comment">//在这里遍历链表所有的结点  </span></div><div class="line">                        <span class="keyword">for</span> (Node&lt;K,V&gt; e = f;; ++binCount) &#123;  </div><div class="line">                            K ek;  </div><div class="line">                            <span class="comment">//如果hash值和key值相同  则修改对应结点的value值  </span></div><div class="line">                            <span class="keyword">if</span> (e.hash == hash &amp;&amp;  </div><div class="line">                                ((ek = e.key) == key ||  </div><div class="line">                                 (ek != <span class="keyword">null</span> &amp;&amp; key.equals(ek)))) &#123;  </div><div class="line">                                oldVal = e.val;  </div><div class="line">                                <span class="keyword">if</span> (!onlyIfAbsent)  </div><div class="line">                                    e.val = value;  </div><div class="line">                                <span class="keyword">break</span>;  </div><div class="line">                            &#125;  </div><div class="line">                            Node&lt;K,V&gt; pred = e;  </div><div class="line">                            <span class="comment">//如果遍历到了最后一个结点，那么就证明新的节点需要插入 就把它插入在链表尾部  </span></div><div class="line">                            <span class="keyword">if</span> ((e = e.next) == <span class="keyword">null</span>) &#123;  </div><div class="line">                                pred.next = <span class="keyword">new</span> Node&lt;K,V&gt;(hash, key,  </div><div class="line">                                                          value, <span class="keyword">null</span>);  </div><div class="line">                                <span class="keyword">break</span>;  </div><div class="line">                            &#125;  </div><div class="line">                        &#125;  </div><div class="line">                    &#125;  </div><div class="line">                    <span class="comment">//如果这个节点是树节点，就按照树的方式插入值  </span></div><div class="line">                    <span class="keyword">else</span> <span class="keyword">if</span> (f <span class="keyword">instanceof</span> TreeBin) &#123;  </div><div class="line">                        Node&lt;K,V&gt; p;  </div><div class="line">                        binCount = <span class="number">2</span>;  </div><div class="line">                        <span class="keyword">if</span> ((p = ((TreeBin&lt;K,V&gt;)f).putTreeVal(hash, key,  </div><div class="line">                                                       value)) != <span class="keyword">null</span>) &#123;  </div><div class="line">                            oldVal = p.val;  </div><div class="line">                            <span class="keyword">if</span> (!onlyIfAbsent)  </div><div class="line">                                p.val = value;  </div><div class="line">                        &#125;  </div><div class="line">                    &#125;  </div><div class="line">                &#125;  </div><div class="line">            &#125;  </div><div class="line">            <span class="keyword">if</span> (binCount != <span class="number">0</span>) &#123;  </div><div class="line">                <span class="comment">//如果链表长度已经达到临界值8 就需要把链表转换为树结构  </span></div><div class="line">                <span class="keyword">if</span> (binCount &gt;= TREEIFY_THRESHOLD)  </div><div class="line">                    treeifyBin(tab, i);  </div><div class="line">                <span class="keyword">if</span> (oldVal != <span class="keyword">null</span>)  </div><div class="line">                    <span class="keyword">return</span> oldVal;  </div><div class="line">                <span class="keyword">break</span>;  </div><div class="line">            &#125;  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">    <span class="comment">//将当前ConcurrentHashMap的元素数量+1  </span></div><div class="line">    addCount(<span class="number">1L</span>, binCount);  </div><div class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>下面是treeifyBin方法，这个方法用于将过长的链表转换为TreeBin对象。但是他并不是直接转换，而是进行一次容量判断，如果容量没有达到转换的要求，直接进行扩容操作并返回；如果满足条件才链表的结构抓换为TreeBin ，<strong>这与HashMap不同的是，它并没有把TreeNode直接放入红黑树，而是利用了TreeBin这个小容器来封装所有的TreeNode.</strong><br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">treeifyBin</span><span class="params">(Node&lt;K,V&gt;[] tab, <span class="keyword">int</span> index)</span> </span>&#123;  </div><div class="line">    Node&lt;K,V&gt; b; <span class="keyword">int</span> n, sc;  </div><div class="line">    <span class="keyword">if</span> (tab != <span class="keyword">null</span>) &#123;  </div><div class="line">        <span class="keyword">if</span> ((n = tab.length) &lt; MIN_TREEIFY_CAPACITY)<span class="comment">//如果table.length&lt;64 就扩大一倍 返回  </span></div><div class="line">            tryPresize(n &lt;&lt; <span class="number">1</span>);  </div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span> ((b = tabAt(tab, index)) != <span class="keyword">null</span> &amp;&amp; b.hash &gt;= <span class="number">0</span>) &#123;  </div><div class="line">            <span class="keyword">synchronized</span> (b) &#123;  </div><div class="line">                <span class="keyword">if</span> (tabAt(tab, index) == b) &#123;  </div><div class="line">                    TreeNode&lt;K,V&gt; hd = <span class="keyword">null</span>, tl = <span class="keyword">null</span>;  </div><div class="line">                    <span class="comment">//构造了一个TreeBin对象 把所有Node节点包装成TreeNode放进去  </span></div><div class="line">                    <span class="keyword">for</span> (Node&lt;K,V&gt; e = b; e != <span class="keyword">null</span>; e = e.next) &#123;  </div><div class="line">                        TreeNode&lt;K,V&gt; p =  </div><div class="line">                            <span class="keyword">new</span> TreeNode&lt;K,V&gt;(e.hash, e.key, e.val,  </div><div class="line">                                              <span class="keyword">null</span>, <span class="keyword">null</span>);<span class="comment">//这里只是利用了TreeNode封装 而没有利用TreeNode的next域和parent域  </span></div><div class="line">                        <span class="keyword">if</span> ((p.prev = tl) == <span class="keyword">null</span>)  </div><div class="line">                            hd = p;  </div><div class="line">                        <span class="keyword">else</span>  </div><div class="line">                            tl.next = p;  </div><div class="line">                        tl = p;  </div><div class="line">                    &#125;  </div><div class="line">                    <span class="comment">//在原来index的位置 用TreeBin替换掉原来的Node对象  </span></div><div class="line">                    setTabAt(tab, index, <span class="keyword">new</span> TreeBin&lt;K,V&gt;(hd));  </div><div class="line">                &#125;  </div><div class="line">            &#125;  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="get"><a href="#get" class="headerlink" title="get"></a>get</h4><p>get方法比较简单，给定一个key来确定value的时候，必须满足两个条件  key相同  hash值相同，对于节点可能在链表或树上的情况，需要分别去查找.<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> V <span class="title">get</span><span class="params">(Object key)</span> </span>&#123;</div><div class="line">    Node&lt;K,V&gt;[] tab; </div><div class="line">    Node&lt;K,V&gt; e, p; </div><div class="line">    <span class="keyword">int</span> n, eh; </div><div class="line">    K ek;</div><div class="line">    <span class="keyword">int</span> h = spread(key.hashCode());</div><div class="line">    <span class="keyword">if</span> ((tab = table) != <span class="keyword">null</span> &amp;&amp; (n = tab.length) &gt; <span class="number">0</span> &amp;&amp;</div><div class="line">        (e = tabAt(tab, (n - <span class="number">1</span>) &amp; h)) != <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">if</span> ((eh = e.hash) == h) &#123;</div><div class="line">            <span class="keyword">if</span> ((ek = e.key) == key || (ek != <span class="keyword">null</span> &amp;&amp; key.equals(ek)))</div><div class="line">                <span class="keyword">return</span> e.val;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (eh &lt; <span class="number">0</span>)<span class="comment">//说明是树，调用TreeBin的find方法</span></div><div class="line">            <span class="keyword">return</span> (p = e.find(h, key)) != <span class="keyword">null</span> ? p.val : <span class="keyword">null</span>;</div><div class="line">        <span class="comment">//如果是链表，则遍历查询</span></div><div class="line">        <span class="keyword">while</span> ((e = e.next) != <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">if</span> (e.hash == h &amp;&amp;</div><div class="line">                ((ek = e.key) == key || (ek != <span class="keyword">null</span> &amp;&amp; key.equals(ek))))</div><div class="line">                <span class="keyword">return</span> e.val;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="http://blog.csdn.net/u010723709/article/details/48007881" target="_blank" rel="external">ConcurrentHashMap源码分析（JDK8版本）</a><br><a href="http://blog.csdn.net/u010412719/article/details/52145145" target="_blank" rel="external">《Java源码分析》：ConcurrentHashMap JDK1.8</a></p>
+<p>-EOF-</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/concurrent/" rel="tag">#concurrent</a>
+          
+            <a href="/tags/collection/" rel="tag">#collection</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/05/Java8集合系列之HashMap（四）/" rel="next" title="Java8集合系列之HashMap（四）">
+                <i class="fa fa-chevron-left"></i> Java8集合系列之HashMap（四）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/01/26/CAS原子操作/" rel="prev" title="深入理解JVM之CAS原子操作（九）">
+                深入理解JVM之CAS原子操作（九） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/01/06/Java8集合系列之ConcurrentHashMap（五）/"
+           data-title="Java8集合系列之ConcurrentHashMap（五）" data-url="https://zouzls.github.io/2017/01/06/Java8集合系列之ConcurrentHashMap（五）/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Before-JDK1-8版本"><span class="nav-number">1.</span> <span class="nav-text">Before JDK1.8版本</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Hashtable"><span class="nav-number">1.1.</span> <span class="nav-text">Hashtable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#锁分离技术"><span class="nav-number">1.2.</span> <span class="nav-text">锁分离技术</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ConcurrentHashMap-JDK1-8"><span class="nav-number">2.</span> <span class="nav-text">ConcurrentHashMap JDK1.8</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#前言"><span class="nav-number">2.1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重要属性"><span class="nav-number">2.2.</span> <span class="nav-text">重要属性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Node-TreeNode-TreeBin"><span class="nav-number">2.3.</span> <span class="nav-text">Node/TreeNode/TreeBin</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Unsafe与CAS"><span class="nav-number">2.4.</span> <span class="nav-text">Unsafe与CAS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#initTable"><span class="nav-number">2.5.</span> <span class="nav-text">initTable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#put"><span class="nav-number">2.6.</span> <span class="nav-text">put</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#get"><span class="nav-number">2.7.</span> <span class="nav-text">get</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

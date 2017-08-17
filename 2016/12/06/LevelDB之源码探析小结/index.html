@@ -1,0 +1,830 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="leveldb," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="现在开始觉得看过的东西如果记下来总觉得像没看一样，网上源码分析贴很多，文章质量各有所长。本文并不打算如对代码进行一一分析，决定只做资料的搬运工，完成对所看过的一些比较好的资源的一些索引，方便日后回头查看，就酱。">
+<meta name="keywords" content="leveldb">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LevelDB之源码探析小结">
+<meta property="og:url" content="https://zouzls.github.io/2016/12/06/LevelDB之源码探析小结/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="现在开始觉得看过的东西如果记下来总觉得像没看一样，网上源码分析贴很多，文章质量各有所长。本文并不打算如对代码进行一一分析，决定只做资料的搬运工，完成对所看过的一些比较好的资源的一些索引，方便日后回头查看，就酱。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://www.spongeliu.com/wp-content/uploads/2010/09/3.png">
+<meta property="og:updated_time" content="2017-03-21T17:00:38.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LevelDB之源码探析小结">
+<meta name="twitter:description" content="现在开始觉得看过的东西如果记下来总觉得像没看一样，网上源码分析贴很多，文章质量各有所长。本文并不打算如对代码进行一一分析，决定只做资料的搬运工，完成对所看过的一些比较好的资源的一些索引，方便日后回头查看，就酱。">
+<meta name="twitter:image" content="http://www.spongeliu.com/wp-content/uploads/2010/09/3.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> LevelDB之源码探析小结 | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                LevelDB之源码探析小结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-12-06T21:45:07+08:00" content="2016-12-06">
+              2016-12-06
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/12/06/LevelDB之源码探析小结/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/12/06/LevelDB之源码探析小结/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/12/06/LevelDB之源码探析小结/" class="leancloud_visitors" data-flag-title="LevelDB之源码探析小结">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>现在开始觉得看过的东西如果记下来总觉得像没看一样，网上源码分析贴很多，文章质量各有所长。本文并不打算如对代码进行一一分析，决定只做资料的搬运工，完成对所看过的一些比较好的资源的一些索引，方便日后回头查看，就酱。<br><a id="more"></a></p>
+<h3 id="LevelDB组件源码"><a href="#LevelDB组件源码" class="headerlink" title="LevelDB组件源码"></a>LevelDB组件源码</h3><h4 id="基础类"><a href="#基础类" class="headerlink" title="基础类"></a>基础类</h4><ol>
+<li><p>Slice<br>其实就是对字符串的封装，Slice是贯穿整个源码的类，只有两个私有的成员变量，如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Slice</span> &#123;</span></div><div class="line">    ...</div><div class="line"> <span class="keyword">private</span>:</div><div class="line">  <span class="keyword">const</span> <span class="keyword">char</span>* data_;</div><div class="line">  <span class="keyword">size_t</span> size_;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+</li>
+<li><p>VarInt<br>作者为了将整数存储的空间进一步压缩，想法子采用变长整数编码的技术，因为如果不这样，一个int整数无论大小如何都会占用4B的空间，采用变长编码之后会根据实际数字的大小采用不同的字节数。<br>参考：<a href="http://brg-liuwei.github.io/tech/2014/10/20/leveldb-4.html" target="_blank" rel="external">讨论coding.h/coding.cc</a></p>
+</li>
+<li>Arena<br>在理解下面的mentable的实现时，必须要先知道memtable是如何管理内存，因为数据首先会以一定的格式存到mentable中，那么每次add（k,v）的过程中，是必然要分配内存空间的,那么Arena其实就相当于memtable的内存大管家，来管理内存的分配和释放。Arena的几个私有变量如下：<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">  <span class="comment">// 当前指针指向的位置</span></div><div class="line"><span class="keyword">char</span>* alloc_ptr_;</div><div class="line">  <span class="comment">//分配的blocks里面还有多少空间没用完</span></div><div class="line"><span class="keyword">size_t</span> alloc_bytes_remaining_;</div><div class="line">  <span class="comment">// 用来存放blocks的指针</span></div><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">char</span>*&gt; blocks_;</div><div class="line"><span class="comment">// 用了多少内存空间</span></div><div class="line">port::AtomicPointer memory_usage_;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>详情参考：<a href="http://mingxinglai.com/cn/2013/01/leveldb-arena/" target="_blank" rel="external">Arena内存管理</a></p>
+<ol>
+<li>Skiplist<br>关于跳表，网上的资源很多,跳跃表（skiplist）是一种随机化的数据，由 William Pugh 在论文《Skip lists: a probabilistic alternative to balanced trees》中提出，效率和平衡树媲美——查找、删除、添加等操作都可以在对数期望时间（O(lgn)）下完成，并且比起平衡树来说，跳跃表的实现要简单直观得多。<br><img src="http://www.spongeliu.com/wp-content/uploads/2010/09/3.png" alt=""></li>
+</ol>
+<h4 id="memtable"><a href="#memtable" class="headerlink" title="memtable"></a>memtable</h4><p>先看看memtable.h中的几个比较重要的私有成员变量<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> SkipList&lt;<span class="keyword">const</span> <span class="keyword">char</span>*, KeyComparator&gt; Table;</div><div class="line"><span class="comment">//key比较器</span></div><div class="line">KeyComparator comparator_;</div><div class="line">  <span class="comment">//引用数目</span></div><div class="line"><span class="keyword">int</span> refs_;</div><div class="line">  <span class="comment">//内存大管家</span></div><div class="line">Arena arena_;</div><div class="line">  <span class="comment">//skiplist数据结构</span></div><div class="line">Table table_;</div></pre></td></tr></table></figure></p>
+<p>再来看看Add方法的源码是如何实现的<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//传参中，key、value均是Slice类型</span></div><div class="line"><span class="keyword">void</span> MemTable::Add(SequenceNumber s, ValueType type,</div><div class="line">                   <span class="keyword">const</span> Slice&amp; key,</div><div class="line">                   <span class="keyword">const</span> Slice&amp; value) &#123;</div><div class="line">  <span class="comment">// 一个kv条目的组成格式</span></div><div class="line">  <span class="comment">//  key_size     : varint32 of internal_key.size()</span></div><div class="line">  <span class="comment">//  key bytes    : char[internal_key.size()]</span></div><div class="line">  <span class="comment">//  value_size   : varint32 of value.size()</span></div><div class="line">  <span class="comment">//  value bytes  : char[value.size()]</span></div><div class="line">  <span class="keyword">size_t</span> key_size = key.size();</div><div class="line">  <span class="keyword">size_t</span> val_size = value.size();</div><div class="line">  <span class="keyword">size_t</span> internal_key_size = key_size + <span class="number">8</span>;<span class="comment">//注意internal_key和key（user key）的区别</span></div><div class="line">  <span class="keyword">const</span> <span class="keyword">size_t</span> encoded_len =<span class="comment">//一个条目的总长度计算，待会要用</span></div><div class="line">      VarintLength(internal_key_size) + internal_key_size +</div><div class="line">      VarintLength(val_size) + val_size;</div><div class="line">  <span class="keyword">char</span>* buf = arena_.Allocate(encoded_len);<span class="comment">//分配encoded_len的内存</span></div><div class="line">  <span class="keyword">char</span>* p = EncodeVarint32(buf, internal_key_size);<span class="comment">//1、放key的size</span></div><div class="line">  <span class="built_in">memcpy</span>(p, key.data(), key_size);                 <span class="comment">//2、放key的内容</span></div><div class="line">  p += key_size;                                   <span class="comment">//3、p指针后移                 </span></div><div class="line">  EncodeFixed64(p, (s &lt;&lt; <span class="number">8</span>) | type);</div><div class="line">  p += <span class="number">8</span>;</div><div class="line">  p = EncodeVarint32(p, val_size);                 <span class="comment">//4、放value的size</span></div><div class="line">  <span class="built_in">memcpy</span>(p, value.data(), val_size);               <span class="comment">//5、放value的内容</span></div><div class="line">  assert((p + val_size) - buf == encoded_len);</div><div class="line">  table_.Insert(buf);<span class="comment">//插入到skiplist中</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>其他详情参考：<a href="http://mingxinglai.com/cn/2013/01/leveldb-memtable/" target="_blank" rel="external">MemTable</a></p>
+<h4 id="sstable"><a href="#sstable" class="headerlink" title="sstable"></a>sstable</h4><h5 id="逻辑结构"><a href="#逻辑结构" class="headerlink" title="逻辑结构"></a>逻辑结构</h5><p>如果你想看原汁原味的作者写的文档，可以打开/doc/table_format.txt,作者在该文档中大致描述了sstable的轮廓，不过看完总是还有些许地方比较疑惑，感觉描述的不是那么清晰，比如block data中的restartpoint（重启点）概念等等，从找的资料来看，下面这篇参考博文对sstable的逻辑结构解释比较清楚易懂：</p>
+<blockquote>
+<p>也许你会以为在划分好block的数据存储区域以后那么就是一个一个的KV对（如图中的Record）了，但是其实不是，leveldb为了降低数据的存储量和快速的查找引入了一个重启点（restartpoint）的概念。出自参考1：<a href="http://www.cnblogs.com/KevinT/p/3815764.html" target="_blank" rel="external">SSTable之逻辑结构</a></p>
+</blockquote>
+<p>参考2：<a href="http://blog.csdn.net/sparkliang/article/details/8635821" target="_blank" rel="external">SSTable的文件组织</a></p>
+<h5 id="table-builder解析"><a href="#table-builder解析" class="headerlink" title="table_builder解析"></a>table_builder解析</h5><p>知道了sstable文件的逻辑结构，才能更好的理解sstable的创建过程，在源码中主要是由table_builder.cc这个文件来帮助完成这些功能的（注意table_builder并不是sstable文件的格式，它只是完成了文件内容的组装和写入）。刚开始看可能会云里雾里，但是在阅读代码之前脑子中尤其应该有data block、index block这些逻辑结构的印象，这是理解下面代码的基本。</p>
+<ol>
+<li>table_builder.h中的结构体和方法<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span>:</div><div class="line"> <span class="function"><span class="keyword">bool</span> <span class="title">ok</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> status().ok(); &#125;</div><div class="line"> <span class="comment">//写文件之前将数据序列化为slice</span></div><div class="line"> <span class="function"><span class="keyword">void</span> <span class="title">WriteBlock</span><span class="params">(BlockBuilder* block, BlockHandle* handle)</span></span>;</div><div class="line"> <span class="comment">//将内容写进文件中</span></div><div class="line"> <span class="function"><span class="keyword">void</span> <span class="title">WriteRawBlock</span><span class="params">(<span class="keyword">const</span> Slice&amp; data, CompressionType, BlockHandle* handle)</span></span>;</div><div class="line"></div><div class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">Rep</span>;</span><span class="comment">//其实是封装了table_builder的成员变量，隐藏细节</span></div><div class="line"> Rep* rep_;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>下面会进入table_builder.cc文件中。</p>
+<ol>
+<li><p>结构体Rep的成员变量：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">Options options;</div><div class="line">Options index_block_options;</div><div class="line"></div><div class="line">WritableFile* file;       <span class="comment">//!!!sstable文件!!!</span></div><div class="line"></div><div class="line"><span class="keyword">uint64_t</span> offset;          <span class="comment">// data block在sstable文件中的偏移，初始0  </span></div><div class="line">Status status;</div><div class="line"></div><div class="line">BlockBuilder data_block;  <span class="comment">//!!!当前操作的data block!!!  </span></div><div class="line">BlockBuilder index_block; <span class="comment">// sstable的index block</span></div><div class="line"></div><div class="line"><span class="built_in">std</span>::<span class="built_in">string</span> last_key;     <span class="comment">//当前data block最后的一条k/v对的key  </span></div><div class="line"><span class="keyword">int64_t</span> num_entries;      <span class="comment">//当前k/v个数，初始0,add方法中可知  </span></div><div class="line"><span class="keyword">bool</span> closed;              <span class="comment">//调用了Finish() or Abandon()，初始false</span></div><div class="line">FilterBlockBuilder* filter_block;<span class="comment">//根据这个块可以快速定位key在不在</span></div><div class="line"><span class="keyword">bool</span> pending_index_entry;</div><div class="line">BlockHandle pending_handle;<span class="comment">//属于index block中的每个k/v中的v，指向data block，可以从字面理解</span></div><div class="line"></div><div class="line"><span class="built_in">std</span>::<span class="built_in">string</span> compressed_output;<span class="comment">//压缩后的data block，临时存储，写入后即被清空</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>Add方法添加每条kv<br>该方法的主要作用就是给当前的data block添加k/v对，这中间还要完成一系列其他的操作，比如：在index block中添加data block的索引键值对（key&lt;-&gt;blockhandle）、在filter block中添加key。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> TableBuilder::Add(<span class="keyword">const</span> Slice&amp; key, <span class="keyword">const</span> Slice&amp; value) &#123;</div><div class="line">  Rep* r = rep_;</div><div class="line">  assert(!r-&gt;closed);</div><div class="line">  <span class="keyword">if</span> (!ok()) <span class="keyword">return</span>;</div><div class="line">  <span class="keyword">if</span> (r-&gt;num_entries &gt; <span class="number">0</span>) &#123;</div><div class="line">    assert(r-&gt;options.comparator-&gt;Compare(key, Slice(r-&gt;last_key)) &gt; <span class="number">0</span>);</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//r-&gt;pending_index_entry标记当前block是否为空，为null才允许进入</span></div><div class="line">  <span class="keyword">if</span> (r-&gt;pending_index_entry) &#123;</div><div class="line">    assert(r-&gt;data_block.empty());</div><div class="line">    r-&gt;options.comparator-&gt;FindShortestSeparator(&amp;r-&gt;last_key, key);</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> handle_encoding;</div><div class="line">    r-&gt;pending_handle.EncodeTo(&amp;handle_encoding);</div><div class="line">    <span class="comment">//所以只能每一个新的data block，在index block中添加一条索引</span></div><div class="line">    r-&gt;index_block.Add(r-&gt;last_key, Slice(handle_encoding));</div><div class="line">    r-&gt;pending_index_entry = <span class="literal">false</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//filter_block不空的时候，添加key</span></div><div class="line">  <span class="keyword">if</span> (r-&gt;filter_block != <span class="literal">NULL</span>) &#123;</div><div class="line">    r-&gt;filter_block-&gt;AddKey(key);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  r-&gt;last_key.assign(key.data(), key.size());</div><div class="line">  <span class="comment">//总记录数自增</span></div><div class="line">  r-&gt;num_entries++;</div><div class="line">  <span class="comment">//当前data block添加记录</span></div><div class="line">  r-&gt;data_block.Add(key, value);</div><div class="line"></div><div class="line">  <span class="keyword">const</span> <span class="keyword">size_t</span> estimated_block_size = r-&gt;data_block.CurrentSizeEstimate();</div><div class="line">  <span class="comment">//当前data block大小达到一定阀值，将缓存kv写入文件。</span></div><div class="line">  <span class="keyword">if</span> (estimated_block_size &gt;= r-&gt;options.block_size) &#123;</div><div class="line">    Flush();</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"><span class="keyword">void</span> TableBuilder::Flush() &#123;</div><div class="line">  Rep* r = rep_;</div><div class="line">  assert(!r-&gt;closed);</div><div class="line">  <span class="keyword">if</span> (!ok()) <span class="keyword">return</span>;</div><div class="line">  <span class="keyword">if</span> (r-&gt;data_block.empty()) <span class="keyword">return</span>;</div><div class="line">  assert(!r-&gt;pending_index_entry);</div><div class="line">  <span class="comment">/////////////////////////////////////////////</span></div><div class="line">  WriteBlock(&amp;r-&gt;data_block, &amp;r-&gt;pending_handle);</div><div class="line">  <span class="comment">/////////////////////////////////////////////</span></div><div class="line">  ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>WriteBlock方法完成写block的准备工作<br>这里的block不仅仅是data block，而是所有的block，从最下面的Finish方法就可以看出。包括data block、filter block在内的所有block都会通过该方法完成block写入文件。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">void</span> TableBuilder::WriteBlock(BlockBuilder* block, BlockHandle* handle) &#123;</div><div class="line">  <span class="comment">// File format contains a sequence of blocks where each block has:</span></div><div class="line">  <span class="comment">//    block_data: uint8[n]</span></div><div class="line">  <span class="comment">//    type: uint8</span></div><div class="line">  <span class="comment">//    crc: uint32</span></div><div class="line">  assert(ok());</div><div class="line">  Rep* r = rep_;</div><div class="line">  Slice raw = block-&gt;Finish();<span class="comment">//获得data block的序列化字符串，注意这里不要看错是Finish，不是Flush</span></div><div class="line">  <span class="comment">//完成压缩方式的选择</span></div><div class="line">  Slice block_contents;</div><div class="line">  CompressionType type = r-&gt;options.compression;</div><div class="line">  <span class="keyword">switch</span> (type) &#123;</div><div class="line">    <span class="keyword">case</span> kNoCompression:<span class="comment">//不压缩</span></div><div class="line">      block_contents = raw;</div><div class="line">      <span class="keyword">break</span>;</div><div class="line">    <span class="keyword">case</span> kSnappyCompression: &#123;<span class="comment">//压缩</span></div><div class="line">      ...</div><div class="line">      <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">///////////////开始真正写文件方法///////////////</span></div><div class="line">  WriteRawBlock(block_contents, type, handle);</div><div class="line">  <span class="comment">//写完之后的一些清理工作</span></div><div class="line">  r-&gt;compressed_output.clear();</div><div class="line">  block-&gt;Reset();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>WriteRawBlock真正写入block数据到文件</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> TableBuilder::WriteRawBlock(<span class="keyword">const</span> Slice&amp; block_contents,</div><div class="line">                                 CompressionType type,</div><div class="line">                                 BlockHandle* handle) &#123;</div><div class="line">  Rep* r = rep_;</div><div class="line">  handle-&gt;set_offset(r-&gt;offset);<span class="comment">//在handle中设置当前block在文件中的偏移</span></div><div class="line">  handle-&gt;set_size(block_contents.size());<span class="comment">//设置block大小</span></div><div class="line">  r-&gt;status = r-&gt;file-&gt;Append(block_contents);<span class="comment">//将当前block内容写入file中</span></div><div class="line">  <span class="keyword">if</span> (r-&gt;status.ok()) &#123;<span class="comment">// 写入1byte的type和4bytes的crc32</span></div><div class="line">    <span class="keyword">char</span> trailer[kBlockTrailerSize];</div><div class="line">    trailer[<span class="number">0</span>] = type;</div><div class="line">    <span class="keyword">uint32_t</span> crc = crc32c::Value(block_contents.data(), block_contents.size());</div><div class="line">    crc = crc32c::Extend(crc, trailer, <span class="number">1</span>);  </div><div class="line">    EncodeFixed32(trailer+<span class="number">1</span>, crc32c::Mask(crc));</div><div class="line">    r-&gt;status = r-&gt;file-&gt;Append(Slice(trailer, kBlockTrailerSize));</div><div class="line">    <span class="keyword">if</span> (r-&gt;status.ok()) &#123;</div><div class="line">      r-&gt;offset += block_contents.size() + kBlockTrailerSize;<span class="comment">// 写入成功更新offset-下一个data block的写入偏移</span></div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>Finish()方法完成添加完所有KV之后的工作<br>基本就是按照sstable文件格式的顺序来完成的，Write filter block、Write metaindex block、Write index block、 Write footer。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div></pre></td><td class="code"><pre><div class="line">Status TableBuilder::Finish() &#123;</div><div class="line">  Rep* r = rep_;</div><div class="line">  Flush();</div><div class="line">  assert(!r-&gt;closed);</div><div class="line">  r-&gt;closed = <span class="literal">true</span>;</div><div class="line"></div><div class="line">  BlockHandle filter_block_handle, metaindex_block_handle, index_block_handle;</div><div class="line"></div><div class="line">  <span class="comment">// Write filter block</span></div><div class="line">  <span class="keyword">if</span> (ok() &amp;&amp; r-&gt;filter_block != <span class="literal">NULL</span>) &#123;</div><div class="line">    WriteRawBlock(r-&gt;filter_block-&gt;Finish(), kNoCompression,</div><div class="line">                  &amp;filter_block_handle);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Write metaindex block</span></div><div class="line">  <span class="keyword">if</span> (ok()) &#123;</div><div class="line">    <span class="function">BlockBuilder <span class="title">meta_index_block</span><span class="params">(&amp;r-&gt;options)</span></span>;</div><div class="line">    <span class="keyword">if</span> (r-&gt;filter_block != <span class="literal">NULL</span>) &#123;</div><div class="line">      <span class="comment">// Add mapping from "filter.Name" to location of filter data</span></div><div class="line">      <span class="built_in">std</span>::<span class="built_in">string</span> key = <span class="string">"filter."</span>;</div><div class="line">      key.append(r-&gt;options.filter_policy-&gt;Name());</div><div class="line">      <span class="built_in">std</span>::<span class="built_in">string</span> handle_encoding;</div><div class="line">      filter_block_handle.EncodeTo(&amp;handle_encoding);</div><div class="line">      meta_index_block.Add(key, handle_encoding);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// TODO(postrelease): Add stats and other meta blocks</span></div><div class="line">    WriteBlock(&amp;meta_index_block, &amp;metaindex_block_handle);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Write index block</span></div><div class="line">  <span class="keyword">if</span> (ok()) &#123;</div><div class="line">    <span class="keyword">if</span> (r-&gt;pending_index_entry) &#123;</div><div class="line">      r-&gt;options.comparator-&gt;FindShortSuccessor(&amp;r-&gt;last_key);</div><div class="line">      <span class="built_in">std</span>::<span class="built_in">string</span> handle_encoding;</div><div class="line">      r-&gt;pending_handle.EncodeTo(&amp;handle_encoding);</div><div class="line">      r-&gt;index_block.Add(r-&gt;last_key, Slice(handle_encoding));</div><div class="line">      r-&gt;pending_index_entry = <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">    WriteBlock(&amp;r-&gt;index_block, &amp;index_block_handle);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Write footer</span></div><div class="line">  <span class="keyword">if</span> (ok()) &#123;</div><div class="line">    Footer footer;</div><div class="line">    footer.set_metaindex_handle(metaindex_block_handle);</div><div class="line">    footer.set_index_handle(index_block_handle);</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> footer_encoding;</div><div class="line">    footer.EncodeTo(&amp;footer_encoding);</div><div class="line">    r-&gt;status = r-&gt;file-&gt;Append(footer_encoding);</div><div class="line">    <span class="keyword">if</span> (r-&gt;status.ok()) &#123;</div><div class="line">      r-&gt;offset += footer_encoding.size();</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> r-&gt;status;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>到这基本sstable文件的创建过程就结束了，一刚开始看基本是懵懵懂懂，到最后仔细看完，发现是大快人心啊，逻辑顺畅太棒了！下面是参考文章，不过感觉排版有点乱，看起来有点累。<br>参考：<a href="http://blog.csdn.net/sparkliang/article/details/8653370" target="_blank" rel="external">创建sstable文件</a></p>
+<h4 id="minor-compaction"><a href="#minor-compaction" class="headerlink" title="minor compaction"></a>minor compaction</h4><p>结束了memtable和sstable这两个在leveldb中举足轻重的两个组件，我们尝试来了解compaction这个过程，也就是immutable memtable是在什么时候dump为sstable的，即为minor compaction这个过程。<br>在看网上的一些参考文章时候，在db_impl.cc文件中的CompactMemTable()方法似乎发现这部分代码：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> DBImpl::CompactMemTable() &#123;</div><div class="line">  ...</div><div class="line">  <span class="comment">// Save the contents of the memtable as a new Table</span></div><div class="line">  VersionEdit edit;</div><div class="line">  Version* base = versions_-&gt;current();</div><div class="line">  base-&gt;Ref();</div><div class="line">  Status s = WriteLevel0Table(imm_, &amp;edit, base);<span class="comment">//调用下面的方法</span></div><div class="line">  base-&gt;Unref();</div><div class="line">  ...</div><div class="line">&#125;</div><div class="line"><span class="comment">//作者的命名实在也是很讲究的，从immutable memtablecompaction得到的Level0的Table</span></div><div class="line">Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,</div><div class="line">                            Version* base) &#123;</div><div class="line">  ...</div><div class="line">  Iterator* iter = mem-&gt;NewIterator();</div><div class="line">  Status s;</div><div class="line">  &#123;</div><div class="line">    mutex_.Unlock();</div><div class="line">    s = BuildTable(dbname_, env_, options_, table_cache_, iter, &amp;meta);</div><div class="line">    mutex_.Lock();</div><div class="line">  &#125;</div><div class="line">  ...</div><div class="line">  <span class="keyword">return</span> s;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>进入BuildTable，发现其实就是build.h/cc这个文件，整个文件就是定义了一个方法，其他什么都没做，BuildTable方法，代码如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div></pre></td><td class="code"><pre><div class="line"><span class="function">Status <span class="title">BuildTable</span><span class="params">(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; dbname,</span></span></div><div class="line"><span class="function"><span class="params">                  Env* env,</span></span></div><div class="line"><span class="function"><span class="params">                  <span class="keyword">const</span> Options&amp; options,</span></span></div><div class="line"><span class="function"><span class="params">                  TableCache* table_cache,</span></span></div><div class="line"><span class="function"><span class="params">                  Iterator* iter,</span></span></div><div class="line"><span class="function"><span class="params">                  FileMetaData* meta)</span> </span>&#123;</div><div class="line">  Status s;</div><div class="line">  meta-&gt;file_size = <span class="number">0</span>;</div><div class="line">  iter-&gt;SeekToFirst();</div><div class="line"></div><div class="line">  <span class="built_in">std</span>::<span class="built_in">string</span> fname = TableFileName(dbname, meta-&gt;number);</div><div class="line">  <span class="keyword">if</span> (iter-&gt;Valid()) &#123;</div><div class="line">    WritableFile* file;<span class="comment">//新建一个file，作为下面TableBuilder对象构造的参数</span></div><div class="line">    s = env-&gt;NewWritableFile(fname, &amp;file);</div><div class="line">    <span class="keyword">if</span> (!s.ok()) &#123;</div><div class="line">      <span class="keyword">return</span> s;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">///////////////////////////////////////////</span></div><div class="line">    TableBuilder* builder = <span class="keyword">new</span> TableBuilder(options, file);<span class="comment">//前面我们分析了很多的table_builder在这里就派上用场了。</span></div><div class="line">    <span class="comment">///////////////////////////////////////////</span></div><div class="line">    meta-&gt;smallest.DecodeFrom(iter-&gt;key());</div><div class="line">    <span class="keyword">for</span> (; iter-&gt;Valid(); iter-&gt;Next()) &#123;</div><div class="line">      Slice key = iter-&gt;key();</div><div class="line">      meta-&gt;largest.DecodeFrom(key);</div><div class="line">      builder-&gt;Add(key, iter-&gt;value());<span class="comment">//循环添加kv</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// Finish and check for builder errors</span></div><div class="line">    <span class="keyword">if</span> (s.ok()) &#123;</div><div class="line">      s = builder-&gt;Finish();<span class="comment">//完成一个sstable的build了</span></div><div class="line">      <span class="keyword">if</span> (s.ok()) &#123;</div><div class="line">        meta-&gt;file_size = builder-&gt;FileSize();</div><div class="line">        assert(meta-&gt;file_size &gt; <span class="number">0</span>);</div><div class="line">      &#125;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">      builder-&gt;Abandon();</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">delete</span> builder;</div><div class="line"></div><div class="line">    <span class="comment">// Finish and check for file errors</span></div><div class="line">    <span class="keyword">if</span> (s.ok()) &#123;</div><div class="line">      s = file-&gt;Sync();</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (s.ok()) &#123;</div><div class="line">      s = file-&gt;Close();</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">delete</span> file;</div><div class="line">    file = <span class="literal">NULL</span>;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (s.ok()) &#123;</div><div class="line">      <span class="comment">// Verify that the table is usable</span></div><div class="line">      Iterator* it = table_cache-&gt;NewIterator(ReadOptions(),</div><div class="line">                                              meta-&gt;number,</div><div class="line">                                              meta-&gt;file_size);</div><div class="line">      s = it-&gt;status();</div><div class="line">      <span class="keyword">delete</span> it;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// Check for input iterator errors</span></div><div class="line">  <span class="keyword">if</span> (!iter-&gt;status().ok()) &#123;</div><div class="line">    s = iter-&gt;status();</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (s.ok() &amp;&amp; meta-&gt;file_size &gt; <span class="number">0</span>) &#123;</div><div class="line">    <span class="comment">// Keep it</span></div><div class="line">  &#125; <span class="keyword">else</span> &#123;</div><div class="line">    env-&gt;DeleteFile(fname);</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">return</span> s;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这就是一个minor compaction的过程，很简单。</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/leveldb/" rel="tag">#leveldb</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/26/LevelDB之源码调试环境搭建/" rel="next" title="LevelDB之源码调试环境搭建">
+                <i class="fa fa-chevron-left"></i> LevelDB之源码调试环境搭建
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/01/01/Java8集合系列之ArrayList（一）/" rel="prev" title="Java8集合系列之ArrayList（一）">
+                Java8集合系列之ArrayList（一） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/12/06/LevelDB之源码探析小结/"
+           data-title="LevelDB之源码探析小结" data-url="https://zouzls.github.io/2016/12/06/LevelDB之源码探析小结/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#LevelDB组件源码"><span class="nav-number">1.</span> <span class="nav-text">LevelDB组件源码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#基础类"><span class="nav-number">1.1.</span> <span class="nav-text">基础类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#memtable"><span class="nav-number">1.2.</span> <span class="nav-text">memtable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sstable"><span class="nav-number">1.3.</span> <span class="nav-text">sstable</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#逻辑结构"><span class="nav-number">1.3.1.</span> <span class="nav-text">逻辑结构</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#table-builder解析"><span class="nav-number">1.3.2.</span> <span class="nav-text">table_builder解析</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#minor-compaction"><span class="nav-number">1.4.</span> <span class="nav-text">minor compaction</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,793 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spring," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="上一篇关于Spring是如何启动的文章，主要是分析了从Tomcat启动到web.xml文件加载，再到通过ContextLoaderListener监听器开始初始化WebApplicationContext这个过程，如果不熟悉可以参考这篇-漫谈Spring的启动与初始化（一），但是上一篇还没有分析到Spring容器是如何通过web.xml里面配置的contextConfigLocation参数和Sp">
+<meta name="keywords" content="Spring">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漫谈Spring的启动与初始化（二）">
+<meta property="og:url" content="https://zouzls.github.io/2017/08/06/SpringInit/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="上一篇关于Spring是如何启动的文章，主要是分析了从Tomcat启动到web.xml文件加载，再到通过ContextLoaderListener监听器开始初始化WebApplicationContext这个过程，如果不熟悉可以参考这篇-漫谈Spring的启动与初始化（一），但是上一篇还没有分析到Spring容器是如何通过web.xml里面配置的contextConfigLocation参数和Sp">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-08-07T06:00:03.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="漫谈Spring的启动与初始化（二）">
+<meta name="twitter:description" content="上一篇关于Spring是如何启动的文章，主要是分析了从Tomcat启动到web.xml文件加载，再到通过ContextLoaderListener监听器开始初始化WebApplicationContext这个过程，如果不熟悉可以参考这篇-漫谈Spring的启动与初始化（一），但是上一篇还没有分析到Spring容器是如何通过web.xml里面配置的contextConfigLocation参数和Sp">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> 漫谈Spring的启动与初始化（二） | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                漫谈Spring的启动与初始化（二）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2017-08-06T17:50:16+08:00" content="2017-08-06">
+              2017-08-06
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Web/" itemprop="url" rel="index">
+                    <span itemprop="name">Web</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/08/06/SpringInit/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/08/06/SpringInit/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/08/06/SpringInit/" class="leancloud_visitors" data-flag-title="漫谈Spring的启动与初始化（二）">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上一篇关于Spring是如何启动的文章，主要是分析了从Tomcat启动到web.xml文件加载，再到通过<code>ContextLoaderListener</code>监听器开始初始化<code>WebApplicationContext</code>这个过程，如果不熟悉可以参考这篇-<a href="https://zouzls.github.io/2017/03/29/SpringStart/">漫谈Spring的启动与初始化（一）</a>，但是上一篇还没有分析到Spring容器是如何通过web.xml里面配置的<code>contextConfigLocation</code>参数和Spring容器的配置文件<code>applicationContext.xml</code>来初始化Spring，本文着力于解决这个疑惑。<br><a id="more"></a></p>
+<h3 id="initWebApplicationContext方法"><a href="#initWebApplicationContext方法" class="headerlink" title="initWebApplicationContext方法"></a>initWebApplicationContext方法</h3><p>当<code>ContextLoaderListener</code>监听到<code>ServletContext</code>初始化事件的时候就会调用<code>ContextLoader</code>的<code>initWebApplicationContext</code>方法，这个方法完成了很多的工作，其中便有下面这段关键代码，源码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">private</span> WebApplicationContext context;</div><div class="line"><span class="function"><span class="keyword">public</span> WebApplicationContext <span class="title">initWebApplicationContext</span><span class="params">(ServletContext servletContext)</span> </span>&#123;</div><div class="line">    ...</div><div class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>.context == <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="comment">//如果context为null就开始创建WebApplicationContext</span></div><div class="line">        <span class="keyword">this</span>.context = <span class="keyword">this</span>.createWebApplicationContext(servletContext);</div><div class="line">    &#125;</div><div class="line">    ...</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="createWebApplicationContext方法"><a href="#createWebApplicationContext方法" class="headerlink" title="createWebApplicationContext方法"></a>createWebApplicationContext方法</h4><p>下面进入该方法，源码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> WebApplicationContext <span class="title">createWebApplicationContext</span><span class="params">(ServletContext sc)</span> </span>&#123;</div><div class="line">    Class contextClass = <span class="keyword">this</span>.determineContextClass(sc);</div><div class="line">    <span class="keyword">if</span>(!ConfigurableWebApplicationContext.class.isAssignableFrom(contextClass)) &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ApplicationContextException(<span class="string">"Custom context class ["</span> + contextClass.getName() + <span class="string">"] is not of type ["</span> + ConfigurableWebApplicationContext.class.getName() + <span class="string">"]"</span>);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="comment">//根据类返回实例</span></div><div class="line">        <span class="keyword">return</span> (ConfigurableWebApplicationContext)BeanUtils.instantiateClass(contextClass);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>其中<code>determineContextClass(sc)</code>方法是用来寻找实现<code>WebApplicationContext</code>接口的类，实现方法如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">protected</span> Class&lt;?&gt; determineContextClass(ServletContext servletContext) &#123;</div><div class="line">    <span class="comment">//关键代码一：</span></div><div class="line">    String contextClassName = servletContext.getInitParameter(<span class="string">"contextClass"</span>);</div><div class="line">    <span class="keyword">if</span>(contextClassName != <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="keyword">return</span> ClassUtils.forName(contextClassName, ClassUtils.getDefaultClassLoader());</div><div class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException var4) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> ApplicationContextException(<span class="string">"Failed to load custom context class ["</span> + contextClassName + <span class="string">"]"</span>, var4);</div><div class="line">        &#125;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="comment">//关键代码二：</span></div><div class="line">        contextClassName = defaultStrategies.getProperty(WebApplicationContext.class.getName());</div><div class="line"></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="keyword">return</span> ClassUtils.forName(contextClassName, ContextLoader.class.getClassLoader());</div><div class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException var5) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> ApplicationContextException(<span class="string">"Failed to load default context class ["</span> + contextClassName + <span class="string">"]"</span>, var5);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>上面这两行代码就是决定返回的Class：如果开发人员在web.xml中配置了一个参数名为<code>contextClass</code>，值为<code>WebApplicationContext</code>接口实现类，那<code>getInitParameter(&quot;contextClass&quot;)</code>就会返回这个配置的实现类Class；如果没有配置，也就是<code>contextClassName==null</code>，那么通过<code>defaultStrategies.getProperty(...)</code>则会返回Spring默认的实现类<code>XmlWebApplicationContext</code>。可能有同学会好奇为什么是这个，这个类是从哪儿来的。<br>我们回头在<code>ContextLoader</code>这个类中最下面可以看到有这么几行静态代码段，在类一加载的时候执行，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ContextLoader</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Properties defaultStrategies;</div><div class="line">    <span class="keyword">static</span> &#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            ClassPathResource ex = <span class="keyword">new</span> ClassPathResource(<span class="string">"ContextLoader.properties"</span>, ContextLoader.class);</div><div class="line">            defaultStrategies = PropertiesLoaderUtils.loadProperties(ex);</div><div class="line">        &#125; <span class="keyword">catch</span> (IOException var1) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Could not load \'ContextLoader.properties\': "</span> + var1.getMessage());</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        currentContextPerThread = <span class="keyword">new</span> ConcurrentHashMap(<span class="number">1</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>在<code>ContextLoader.class</code>的同一个包下面，可以找到这个配置文件，其中只有一行配置如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">org.springframework.web.context.WebApplicationContext=org.springframework.web.context.support.XmlWebApplicationContext</div></pre></td></tr></table></figure></p>
+<p><code>XmlWebApplicationContext</code>这个类就是<code>WebApplicationContext</code>这个接口最终的实现类，也是Spring启动时默认使用的类。其实还有一些实现类，让我们自己去加载<code>applicationContext.xml</code>，比如<code>ClassPathXmlApplicationContext</code>。<br>这样在上述的<code>createWebApplicationContext</code>方法中，我们拿到的就是<code>XmlWebApplicationContext.class</code>，然后通过<code>BeanUtils.instantiateClass(contextClass)</code>方法根据类名创建对应实例，并且进行强制转换得到<code>ConfigurableWebApplicationContext</code>接口的实例，因为<code>XmlWebApplicationContext</code>是后者的实现类，所以这样转换是没问题的（当然没问题哈哈）。<br>那么<code>createWebApplicationContext</code>方法分析到此为止。</p>
+<p>我们继续看<code>initWebApplicationContext</code>方法中下面这段代码的最后一行：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span>(<span class="keyword">this</span>.context == <span class="keyword">null</span>) &#123;</div><div class="line">    <span class="comment">//如果context为null就开始创建WebApplicationContext</span></div><div class="line">    <span class="keyword">this</span>.context = <span class="keyword">this</span>.createWebApplicationContext(servletContext);</div><div class="line">&#125;</div><div class="line"><span class="keyword">if</span>(<span class="keyword">this</span>.context <span class="keyword">instanceof</span> ConfigurableWebApplicationContext) &#123;</div><div class="line">    ConfigurableWebApplicationContext err = (ConfigurableWebApplicationContext)<span class="keyword">this</span>.context;</div><div class="line">    <span class="keyword">if</span>(!err.isActive()) &#123;</div><div class="line">        ...</div><div class="line">        <span class="comment">//关键代码：配置和刷新WebApplicationContext，这里其实就是XmlWebApplicationContext了</span></div><div class="line">        <span class="keyword">this</span>.configureAndRefreshWebApplicationContext(err, servletContext);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="configureAndRefreshWebApplicationContext方法"><a href="#configureAndRefreshWebApplicationContext方法" class="headerlink" title="configureAndRefreshWebApplicationContext方法"></a>configureAndRefreshWebApplicationContext方法</h4><p>在上面代码中我们通过<code>XmlWebApplicationContext</code>类创建了<code>WebApplicationContext</code>的实例，本节方法则是为该实例设置一些配置信息和创建各种bean。我们重点关注下面几行代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">configureAndRefreshWebApplicationContext</span><span class="params">(ConfigurableWebApplicationContext wac, ServletContext sc)</span> </span>&#123;</div><div class="line">    ...</div><div class="line">    wac.setServletContext(sc);</div><div class="line">    <span class="comment">//关键代码一：在ServletContext中获取contextConfigLocation值，查找配置文件地址</span></div><div class="line">    configLocationParam = sc.getInitParameter(<span class="string">"contextConfigLocation"</span>);</div><div class="line">    <span class="keyword">if</span>(configLocationParam != <span class="keyword">null</span>) &#123;</div><div class="line">        wac.setConfigLocation(configLocationParam);</div><div class="line">    &#125;</div><div class="line">    ...</div><div class="line">    <span class="comment">//关键代码二：刷新XmlWebApplicationContext</span></div><div class="line">    wac.refresh();</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>在Spring的项目中，经常要在web.xml中配置contextConfigLocation的参数，我们对于下面的几行xml代码应该也很熟悉，它设置了Spring容器配置文件的路径：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">&lt;!-- Context ConfigLocation --&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">context-param</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">param-value</span>&gt;</span>classpath*:/spring-context*.xml<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">context-param</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>既然是在web.xml中配置的这些参数，为什么是在ServletContext中去取呢？在上一篇文章中分析过，Tomcat在加载web.xml文件时，会最终将该配置文件的配置属性参数以键值对的形式存放在每个web应用对应的ServletContext中，这样我们在web应用中的任何地方都可以拿到该参数值（后面还会提到ServletContext其他的使用场景）。<br>当然，如果我们没有在web.xml中配置该参数的话，XmlWebApplicationContext类也是有默认值的，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XmlWebApplicationContext</span> <span class="keyword">extends</span> <span class="title">AbstractRefreshableWebApplicationContext</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_CONFIG_LOCATION = <span class="string">"/WEB-INF/applicationContext.xml"</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_CONFIG_LOCATION_PREFIX = <span class="string">"/WEB-INF/"</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_CONFIG_LOCATION_SUFFIX = <span class="string">".xml"</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>到这里，配置文件信息拿到了，再就是<code>wac.refresh()</code>方法了，这个方法具体实现在AbstractApplicationContext类中，进入该方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">refresh</span><span class="params">()</span> <span class="keyword">throws</span> BeansException, IllegalStateException </span>&#123;</div><div class="line">    Object var1 = <span class="keyword">this</span>.startupShutdownMonitor;</div><div class="line">    <span class="keyword">synchronized</span>(<span class="keyword">this</span>.startupShutdownMonitor) &#123;</div><div class="line">       <span class="comment">//容器预先准备，记录容器启动时间和标记</span></div><div class="line">      prepareRefresh();</div><div class="line">      <span class="comment">//创建bean工厂，里面实现了BeanDefinition的装载</span></div><div class="line">      ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();</div><div class="line">      <span class="comment">//配置bean工厂的上下文信息，如类装载器等</span></div><div class="line">      prepareBeanFactory(beanFactory);</div><div class="line">      <span class="keyword">try</span> &#123;</div><div class="line">        <span class="comment">//在BeanDefinition被装载后，提供一个修改BeanFactory的入口</span></div><div class="line">        postProcessBeanFactory(beanFactory);</div><div class="line">        <span class="comment">//在bean初始化之前，提供对BeanDefinition修改入口，PropertyPlaceholderConfigurer在这里被调用</span></div><div class="line">        invokeBeanFactoryPostProcessors(beanFactory);</div><div class="line">        <span class="comment">//注册各种BeanPostProcessors，用于在bean被初始化时进行拦截，进行额外初始化操作</span></div><div class="line">        registerBeanPostProcessors(beanFactory);</div><div class="line">        <span class="comment">//初始化MessageSource</span></div><div class="line">        initMessageSource();</div><div class="line">        <span class="comment">//初始化上下文事件广播</span></div><div class="line">        initApplicationEventMulticaster();</div><div class="line">        <span class="comment">//模板方法</span></div><div class="line">        onRefresh();</div><div class="line">        <span class="comment">//注册监听器</span></div><div class="line">        registerListeners();</div><div class="line">        <span class="comment">//初始化所有未初始化的非懒加载的单例Bean</span></div><div class="line">        finishBeanFactoryInitialization(beanFactory);</div><div class="line">        <span class="comment">//发布事件通知</span></div><div class="line">        finishRefresh();</div><div class="line">        &#125; <span class="keyword">catch</span> (BeansException var5) &#123;</div><div class="line">            <span class="keyword">if</span>(<span class="keyword">this</span>.logger.isWarnEnabled()) &#123;</div><div class="line">                <span class="keyword">this</span>.logger.warn(<span class="string">"Exception encountered during context initialization - cancelling refresh attempt: "</span> + var5);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">this</span>.destroyBeans();</div><div class="line">            <span class="keyword">this</span>.cancelRefresh(var5);</div><div class="line">            <span class="keyword">throw</span> var5;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这个方法里面就是IOC容器初始化的大致步骤了。</p>
+<h4 id="after-configureAndRefresh"><a href="#after-configureAndRefresh" class="headerlink" title="after configureAndRefresh"></a>after configureAndRefresh</h4><p>在IOC容器初始化之后，也就是configureAndRefreshWebApplicationContext方法执行结束后有一行代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">    <span class="comment">//关键代码：</span></div><div class="line">servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, <span class="keyword">this</span>.context);</div></pre></td></tr></table></figure></p>
+<p>可以看到，这里初始化后的context被存放到了servletContext中，具体的就是存到了一个Map变量中，key值就是WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE这个常量。这个key常量在WebApplicationContext接口中设置的，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">WebApplicationContext</span> <span class="keyword">extends</span> <span class="title">ApplicationContext</span> </span>&#123;</div><div class="line">    <span class="comment">//org.springframework.web.context.WebApplicationContext.ROOT</span></div><div class="line">    String ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE = WebApplicationContext.class.getName() + <span class="string">".ROOT"</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>另外，我们也可以使用Spring的WebApplicationContextUtils工具类获取这个WebApplicationContext（不过这里request获取ServletContext是有限制的，要求servlet-api.jar 包的版本是在3.0以上）方式如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">WebApplicationContext applicationContext = WebApplicationContextUtils.getWebApplicationContext(request.getServletContext());</div></pre></td></tr></table></figure></p>
+<p>到这里Spring的启动与初始化应该就结束了，这里面要理清ServletContext和Spring容器的关系，整个Spring容器被放置在ServletContext这样一个类似于Map的结构中。ServletContext 从字面上理解也是Servlet的容器，被 Servlet 程序间接用来与外层 Web 容器通信，例如写日志，转发请求等。每一个 Web 应用程序含有一个Context ，被Web 应用内的各个程序共享。因为Context 可以用来保存资源并且共享，所以ServletContext 的常用场景是Web级应用缓存—- 把不经常更改的内容读入内存，所以服务器响应请求的时候就不需要进行慢速的磁盘I/O 了。</p>
+<p>-EOF-</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spring/" rel="tag">#Spring</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/20/Java8集合系列之LinkedHashMap/" rel="next" title="Java8集合系列之LinkedHashMap">
+                <i class="fa fa-chevron-left"></i> Java8集合系列之LinkedHashMap
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/08/06/SpringInit/"
+           data-title="漫谈Spring的启动与初始化（二）" data-url="https://zouzls.github.io/2017/08/06/SpringInit/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#initWebApplicationContext方法"><span class="nav-number">1.</span> <span class="nav-text">initWebApplicationContext方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#createWebApplicationContext方法"><span class="nav-number">1.1.</span> <span class="nav-text">createWebApplicationContext方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#configureAndRefreshWebApplicationContext方法"><span class="nav-number">1.2.</span> <span class="nav-text">configureAndRefreshWebApplicationContext方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#after-configureAndRefresh"><span class="nav-number">1.3.</span> <span class="nav-text">after configureAndRefresh</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

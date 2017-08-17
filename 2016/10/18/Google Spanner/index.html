@@ -1,0 +1,829 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="分布式系统,database," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="这篇文章是由之前海量存储的论文课程报告整理而成，Google Spanner这篇2012年发表在OSDI上面的论文确实艰涩难懂，中间查阅了不少资料才稍微理解里面的关键词或者是专业术语，本文一部分内容是论文的中文翻译，作了删减，想看原文可以绕过。之所以放在blog上，为了方便日后检索该部分相关内容，同时也希望能达到一起交流的目的。">
+<meta name="keywords" content="分布式系统,database">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Google Spanner">
+<meta property="og:url" content="https://zouzls.github.io/2016/10/18/Google Spanner/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="这篇文章是由之前海量存储的论文课程报告整理而成，Google Spanner这篇2012年发表在OSDI上面的论文确实艰涩难懂，中间查阅了不少资料才稍微理解里面的关键词或者是专业术语，本文一部分内容是论文的中文翻译，作了删减，想看原文可以绕过。之所以放在blog上，为了方便日后检索该部分相关内容，同时也希望能达到一起交流的目的。">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%871.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/QQ%E6%88%AA%E5%9B%BE20161201102133.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%872.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%873.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%875.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%876.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%877.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%878.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%879.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%8711.png">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%8710.png">
+<meta property="og:updated_time" content="2016-12-01T03:59:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Google Spanner">
+<meta name="twitter:description" content="这篇文章是由之前海量存储的论文课程报告整理而成，Google Spanner这篇2012年发表在OSDI上面的论文确实艰涩难懂，中间查阅了不少资料才稍微理解里面的关键词或者是专业术语，本文一部分内容是论文的中文翻译，作了删减，想看原文可以绕过。之所以放在blog上，为了方便日后检索该部分相关内容，同时也希望能达到一起交流的目的。">
+<meta name="twitter:image" content="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%871.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> Google Spanner | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Google Spanner
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2016-10-18T00:29:24+08:00" content="2016-10-18">
+              2016-10-18
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Database/" itemprop="url" rel="index">
+                    <span itemprop="name">Database</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/10/18/Google Spanner/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/10/18/Google Spanner/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/18/Google Spanner/" class="leancloud_visitors" data-flag-title="Google Spanner">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这篇文章是由之前海量存储的论文课程报告整理而成，Google Spanner这篇2012年发表在OSDI上面的论文确实艰涩难懂，中间查阅了不少资料才稍微理解里面的关键词或者是专业术语，本文一部分内容是论文的中文翻译，作了删减，想看原文可以绕过。之所以放在blog上，为了方便日后检索该部分相关内容，同时也希望能达到一起交流的目的。<br><a id="more"></a></p>
+<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="What-is-Spanner"><a href="#What-is-Spanner" class="headerlink" title="What is Spanner"></a>What is Spanner</h4><p>Spanner 是谷歌公司研发的、可扩展的、多版本、全球分布式、同步复制数据库。 它是第一个把数据分布在全球范围内的系统，并且支持外部一致性的分布式事务。<br>论文描述 了 Spanner 的架构、特性、不同设计决策的背后机理和一个新的时间 API，这个 API 可以暴 露时钟的不确定性。这个 API 及其实现，对于支持外部一致性和许多强大特性而言，是非常 重要的，这些强大特性包括：非阻塞的读、不采用锁机制的只读事务、原子模式变更。</p>
+<h4 id="Why-is-spanner"><a href="#Why-is-spanner" class="headerlink" title="Why is spanner"></a>Why is spanner</h4><ul>
+<li>Why not BigTable<br>客户反映 BigTable 无法应用到一些特定类型的应用上面，比如具备复杂可变的模式，或者对于在大范围内分布的多个副本数据具有较高的一致性要求。</li>
+<li>Why not Megastore<br>谷歌的许多应用已经选择使用Megastore，主要是因为它的半关系数据模型和对同步复制的支持，尽管Megastore 具备较差的写操作吞吐量。</li>
+</ul>
+<p>Spanner 已经从一个类似 BigTable 的单一版本的键值存储，演化成为一个具有时间属性的多版本的数据库。数据被存储到模式化的、半关系的表中，数据被版本化，每个版本都会自动以提交时间作为时间戳，旧版本的数据会更容易被垃圾回收。应用可以读取旧版本的数据。Spanner支持通用的事务，提供了基于 SQL 的查询语言。</p>
+<h4 id="The-interesting-features-of-Spanner"><a href="#The-interesting-features-of-Spanner" class="headerlink" title="The interesting features of Spanner"></a>The interesting features of Spanner</h4><ul>
+<li>第一，在数据的副本配置方面，应用可以在一个很细的粒度上进行动态控制。<br>应用可以详细规定，哪些数据中心包含哪些数据，数据距离用户有多远（控制用户读取数据的延迟），不同数据副本之间距离有多远（控制写操作的延迟），以及需要维护多少个副本（控制可用性和读操作性能）。数据也可以被动态和透明地在数据中心之间进行移动，从而平衡不同数据中心内资源的使用。（这个特性的实现应该是跟后面的目录设计相关的。）<br>下面两个属性很难在一个分布式数据库上实现：</li>
+<li>第二，Spanner提供了读和写操 作的外部一致性。</li>
+<li>第三，在一个时间戳下面的跨越数据库的全球一致性的读操作。</li>
+</ul>
+<h3 id="The-implemention"><a href="#The-implemention" class="headerlink" title="The implemention"></a>The implemention</h3><h4 id="Spanner-server-organization"><a href="#Spanner-server-organization" class="headerlink" title="Spanner server organization"></a>Spanner server organization</h4><p>一个 Spanner 部署称为一个universe。假设Spanner 在全球范围内管理数据，那么，将会只有可数的、运行中的universe。我们当前正在运行一个测试用的 universe，一个部署/ 线上用的 universe 和一个只用于线上应用的 universe。<br><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%871.png" alt=""><br>如图上所示，一个zone是物理隔离的单元，在一个数据中心中，可能有一个或者多个 zone，例如，属于不同应用的数据可能必须被分区存储到同一个数据中心的不同服务器集合中。一个zone包括一个 zonemaster，和一百至几千个spanserver。Zonemaster把数据分配给spanserver，spanserver 把数据提供给客户端。客户端使用每个zone上面的 location proxy来定位可以为自己提供数据的 spanserver。Universe master 和 placement driver，当前都只有一个。</p>
+<h4 id="Spanserver-software-stack"><a href="#Spanserver-software-stack" class="headerlink" title="Spanserver software stack"></a>Spanserver software stack</h4><p><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/QQ%E6%88%AA%E5%9B%BE20161201102133.png" alt=""><br>如图上所示，Paxos状态机是用来实现一系列被一致性复制的映射。对于每个是领导者的副本而言，每个 spanserver 会实现一个锁表来实现并发控制。对于每个扮演领导者角色的副本，每个 spanserver也会实施一个事务管理器来支持分布式事务。这个事务管理器被用来实现一个 participant leader，该组内的其他副本则是作为 participant slaves。如果一个事务只包含一个Paxos组（对于许多事务而言都是如此），它就可以绕过事务管理器，因为锁表和 Paxos二者一起可以保证事务性。如果一个事务包含了多 于一个Paxos组，那些组的领导者之间会彼此协调合作完成两阶段提交。其中一个参与者组， 会被选为协调者，该组的 participant leader 被称为 coordinator leader，该组的 participant slaves 被称为 coordinator slaves。每个事务管理器的状态，会被保存到底层的 Paxos 组。</p>
+<h4 id="DataModel"><a href="#DataModel" class="headerlink" title="DataModel"></a>DataModel</h4><ul>
+<li>Schematized semi-relational tables<br>由此可以看出 Spanner 的数据模型的一个显著特点是弱化了列的概念，即 BigTable 是通过一对（行坐标、 列坐标）结合一个时间戳（可选）来索引一个数据 cell；而 Spanner 采用行坐标结合时间戳的方式索引一个数据行（与关系型数据的方式类似）。<br>Spanner 会把下面的数据特性集合暴露给应用：基于模式化的半关系表的数据模型，查 询语言和通用事务。支持这些特性的动机，是受到许多因素驱动的。需要支持模式化的半关系表是由 Megastore的普及来支持的。<br>Spanner 采用的数据模型不是纯粹关系型的，因为在Spanner中每行必须包含一个名称。因而，Spanner 更像是一个映射主键列与非主键列的 key-value 存储。</li>
+<li>query language like sql<br>从下图可以看出，查询语言风格跟sql还是很类似的：<br><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%872.png" alt=""></li>
+</ul>
+<h4 id="Directories-and-Placement"><a href="#Directories-and-Placement" class="headerlink" title="Directories and Placement"></a>Directories and Placement</h4><p><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%873.png" alt=""><br>每个 Spanner 数据库必须被客户端分割成一个或多个表的层次结构。客户端应用会使用 INTERLEAVE IN 语句在数据库模式中声明这个层次结构。目录表中 的每行都具有键 K，和子孙表中的所有以 K 开始（以字典顺序排序）的行一起，构成了一个目录。<br><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%875.png" alt=""><br>如图上所示，一个目录是数据放置的基本单元。属于一个目录的所有数据，都具有相同的副本配置。当数据在不同的 Paxos 组之间进行移动时，会一个目录一个目录地转移。Spanner 可能会移动一个目录从而减轻一个 Paxos 组的负担。也可能会把那些被频繁地一起访问的目录都放置到同一个组中。或者会把一个目录转移到距离访问者更近的地方。</p>
+<h3 id="TrueTime"><a href="#TrueTime" class="headerlink" title="TrueTime"></a>TrueTime</h3><h4 id="question"><a href="#question" class="headerlink" title="question"></a>question</h4><p><strong>What is MVCC？</strong><br>Mvcc主要是目前数据库中常用的一种处理并发的机制，比如mysql的innodb引擎、postgre、oracle，主要是对一个数据维持多个版本，实现了无锁方式的读写、快照读。这样读不会阻塞写、写不会阻塞读，而且达到了可重读和读已提交的隔离级别。因为系统会给每个事务分配时间戳作为事务ID，每个数据会维持几个版本，版本号就是时间戳，比如创建时间和删除时间，用来表示是哪个事务创建和删除的。每次修改数据创建一个新版本数据，并不在原来的基础上修改，所以读事务并不影响写，但是如果遇到写的时候正好进来一个读的事务，也可以读到上一个版本的快照，不至于读到中间状态，这样写不影响读，同时就保证了外部一致性，也实现了无锁读，MVCC的这种思想解决了读写、写读、读读效率的巨大提升。<br><strong>如果是单点写？</strong><br>如果是单机数据库（单点写），事务提交的时候获取时间戳作为事务ID，谁先提交谁的时间戳就小。Oracle就是这么干的。<br>如果是一个分布式数据库呢，由于1.0版本之前的OceanBase实际上是单点写，也就是说事务ID是在同一个节点上获得，和第1点类似。<br><strong>如果是多点写？</strong><br>既然多点写，那么机器和机器之间必然存在时钟误差。事务时间戳从不同的机器上获得，那么必然会存在在wall time（就是现实时间、实际时间，这么理解）上先提交的事务最后得到的事务ID(时间戳)反而更小这种情况。<br><strong>If Lamport clock？If Vector clock？</strong><br>不够高效，都存在通讯开销。</p>
+<h4 id="TrueTimeAPI"><a href="#TrueTimeAPI" class="headerlink" title="TrueTimeAPI"></a>TrueTimeAPI</h4><p>TrueTime API 是考虑时钟不确定性的时间 API。在 TrueTime API 中， 时间被表示成一段时间区间 TTinterval。提供下面的三个API接口：<br><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%876.png" alt=""></p>
+<h4 id="TrueTime-Architecture"><a href="#TrueTime-Architecture" class="headerlink" title="TrueTime Architecture"></a>TrueTime Architecture</h4><p><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%877.png" alt=""><br>如图上所示，TrueTime 是由每个数据中心上许多的 time master 机器和每台机器上的 timeslave daemon 共同实现。所有 master 的时间参考值会进行彼 此校对；每个 master 也会交叉检查时间参考值和本地时间，如果两者差别太大则 master 会 将自己驱逐。<br>每个 daemon（client）会从不同的 master 中收集时间参考值， master 的选取包括 GPS 和原子钟，同时涵盖本地的数据中心和远处的数据中心。在同步时， daemon 会考虑一个ε作为时间的不确定性。</p>
+<h3 id="Concurrency-Control"><a href="#Concurrency-Control" class="headerlink" title="Concurrency Control"></a>Concurrency Control</h3><p>本部分内容描述 TrueTime 如何可以用来保证并发控制的正确性，以及这些属性如何用 来实现一些关键特性，比如外部一致性的事务、无锁机制的只读事务、针对历史数据的非阻 塞读。这些特性可以保证，在时间戳为 t 的时刻的数据库读操作，一定只能看到在 t 时刻之 前已经提交的事务。</p>
+<h4 id="Assigning-Timestamps-to-RW-Transactions"><a href="#Assigning-Timestamps-to-RW-Transactions" class="headerlink" title="Assigning Timestamps to RW Transactions"></a>Assigning Timestamps to RW Transactions</h4><p>外部一致性<br>即两个事务，一个事务结束后另一个事务才开始。<br><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%878.png" alt=""><br>如图上所示，利用TrueTime API，Spanner可以保证给事务标记的时间戳介于事务开始的真实时间和事务结束的真实时间之间。假如事务开始时TrueTime API返回的时间是{t1, ε}，此时真实时间在t1-ε到t1+ε之间；事务结束时TrueTime API返回的时间是{t2, ε}，此时真实时间在t2-ε到t2+ε之间。Spanner会在t1+ε和t2-ε之间选择一个时间点作为事务的时间戳，但这需要保证t1+ε小于t2-ε，为了保证这点，Spanner会在事务执行过程中等待直到t2-ε大于t1+ε的时候才提交事务。可以推导出，Spanner中一个事务至少需要2ε的时间(平均8毫秒)才能完成。</p>
+<h4 id="RW-Transactions"><a href="#RW-Transactions" class="headerlink" title="RW Transactions"></a>RW Transactions</h4><p><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%879.png" alt=""><br>2PL：两段锁协议。就是事务的时候加锁，事务结束释放锁。当所有的锁都已经获得以后，在任何锁被释放之前，就可以给事务分配时间戳。</p>
+<ul>
+<li>A single leader replica<br>在为写操作分配时间戳时，当事务只涉及单个 leader 副本，则可以使用单调增加的方式分配时间戳。</li>
+<li>Multiple leader replica<br>在2PC（两阶段提交）过程中， 非协调者 leader 会将选取的准备时间戳通知协调者 leader，协调者leader会根据所有收到准备时间戳为整个事务选取一个时间戳，并通知所有非协调者 leader，所有参与的 leader会在同一时间戳进行提交并释放锁。</li>
+</ul>
+<h4 id="Snapshot-Read"><a href="#Snapshot-Read" class="headerlink" title="Snapshot Read"></a>Snapshot Read</h4><p><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%8711.png" alt=""><br>一个快照读操作，是针对历史数据的读取，执行过程中，不需要锁机制。一个客户端可 以为快照读确定一个时间戳，或者提供一个时间范围让 Spanner 来自动选择时间戳。不管是 哪种情况，快照读操作都可以在任何具有足够新的副本上执行。</p>
+<h4 id="Read-Transaction"><a href="#Read-Transaction" class="headerlink" title="Read Transaction"></a>Read Transaction</h4><p><img src="http://oaewlsdmg.bkt.clouddn.com/image/jpg/%E5%9B%BE%E7%89%8710.png" alt=""><br>一个只读事务分成两个阶段执行：分配一个时间戳 read，然后当成 sread时刻的快照读 来执行事务读操作。<br>一个只读事务具备快照隔离的性能优势。在一个只读事务中的读操作，在 执行时会采用一个系统选择的时间戳，不包含锁机制，因此，后面到达的写操作不会被阻塞。<br>在一个只读事务中的读操作，可以到任何足够新的副本上去执行。</p>
+<p>因为只读操作时候，读的是历史版本，为什么不会阻塞写是因为每次写都会创建一个新的版本。</p>
+<h3 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h3><p><a href="https://www.usenix.org/node/170855" target="_blank" rel="external">Spanner</a><br><a href="http://dblab.xmu.edu.cn/post/google-spanner/" target="_blank" rel="external">Google Spanner (中文版)_厦门大学数据库实验室</a><br><a href="http://v.youku.com/v_show/id_XMTMyMzE5MTg2MA==.html?f=23272406&amp;from=y1.2-3.2" target="_blank" rel="external">事务与分布式事务原理与实现-沈询</a><br><a href="http://club.alibabatech.org/article_detail.htm?articleId=22" target="_blank" rel="external">阿里技术沙龙</a><br><a href="http://www.jianshu.com/p/7ac3f09203b7" target="_blank" rel="external">百万节点数据库扩展之道(4): Google Spanner</a><br><a href="https://www.zhihu.com/question/19994133" target="_blank" rel="external">分布式数据库中为什么要使用 Vector Clock？</a><br><a href="http://www.cnblogs.com/zhangeamon/p/5586862.html" target="_blank" rel="external">分布式事务实现-Spanner - Eamon13</a><br><a href="http://www.yankay.com/google-spanner%E5%8E%9F%E7%90%86-%E5%85%A8%E7%90%83%E7%BA%A7%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" target="_blank" rel="external">我自然 | Google Spanner原理- 全球级的分布式数据库</a></p>
+<p>++++++++++++++++++++++++</p>
+<p>附件：<a href="http://oaewlsdmg.bkt.clouddn.com/Storage%20System%20Presentation.ppt" target="_blank" rel="external">Storage-System-Presentation课程报告PPT</a></p>
+<p>-EOF-</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/分布式系统/" rel="tag">#分布式系统</a>
+          
+            <a href="/tags/database/" rel="tag">#database</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/17/深入理解JVM之JMM（三）/" rel="next" title="深入理解JVM之Java内存模型（三）">
+                <i class="fa fa-chevron-left"></i> 深入理解JVM之Java内存模型（三）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/11/17/Git常用命令小结/" rel="prev" title="Git常用命令小结">
+                Git常用命令小结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/10/18/Google Spanner/"
+           data-title="Google Spanner" data-url="https://zouzls.github.io/2016/10/18/Google Spanner/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#What-is-Spanner"><span class="nav-number">1.1.</span> <span class="nav-text">What is Spanner</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Why-is-spanner"><span class="nav-number">1.2.</span> <span class="nav-text">Why is spanner</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#The-interesting-features-of-Spanner"><span class="nav-number">1.3.</span> <span class="nav-text">The interesting features of Spanner</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#The-implemention"><span class="nav-number">2.</span> <span class="nav-text">The implemention</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Spanner-server-organization"><span class="nav-number">2.1.</span> <span class="nav-text">Spanner server organization</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Spanserver-software-stack"><span class="nav-number">2.2.</span> <span class="nav-text">Spanserver software stack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DataModel"><span class="nav-number">2.3.</span> <span class="nav-text">DataModel</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Directories-and-Placement"><span class="nav-number">2.4.</span> <span class="nav-text">Directories and Placement</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TrueTime"><span class="nav-number">3.</span> <span class="nav-text">TrueTime</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#question"><span class="nav-number">3.1.</span> <span class="nav-text">question</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TrueTimeAPI"><span class="nav-number">3.2.</span> <span class="nav-text">TrueTimeAPI</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TrueTime-Architecture"><span class="nav-number">3.3.</span> <span class="nav-text">TrueTime Architecture</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Concurrency-Control"><span class="nav-number">4.</span> <span class="nav-text">Concurrency Control</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Assigning-Timestamps-to-RW-Transactions"><span class="nav-number">4.1.</span> <span class="nav-text">Assigning Timestamps to RW Transactions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#RW-Transactions"><span class="nav-number">4.2.</span> <span class="nav-text">RW Transactions</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Snapshot-Read"><span class="nav-number">4.3.</span> <span class="nav-text">Snapshot Read</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Read-Transaction"><span class="nav-number">4.4.</span> <span class="nav-text">Read Transaction</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reference"><span class="nav-number">5.</span> <span class="nav-text">Reference</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
