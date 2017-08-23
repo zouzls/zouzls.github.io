@@ -1,0 +1,820 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="open-messaging,aliware," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="前段时间参加了阿里举办的一期阿里中间件性能大赛，初赛的信息详见链接，说简单点就是实现一个可以持久化的消息队列引擎，能够hold住亿万级别的消息不丢失，抵挡住消息洪峰。消息具有producer和comsumer两个角色，不同的comsumer可以订阅感兴趣的Topic消息，同一个topic的消息会发给所有对这个topic感兴趣的comsumer，同时每个comsumer可以拥有一个唯一的消息管道qu">
+<meta name="keywords" content="open-messaging,aliware">
+<meta property="og:type" content="article">
+<meta property="og:title" content="阿里中间件性能大赛初赛小结">
+<meta property="og:url" content="https://zouzls.github.io/2017/07/04/alibaba-midware-contest-summary/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="前段时间参加了阿里举办的一期阿里中间件性能大赛，初赛的信息详见链接，说简单点就是实现一个可以持久化的消息队列引擎，能够hold住亿万级别的消息不丢失，抵挡住消息洪峰。消息具有producer和comsumer两个角色，不同的comsumer可以订阅感兴趣的Topic消息，同一个topic的消息会发给所有对这个topic感兴趣的comsumer，同时每个comsumer可以拥有一个唯一的消息管道qu">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20170707165412.png">
+<meta property="og:updated_time" content="2017-07-07T18:03:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="阿里中间件性能大赛初赛小结">
+<meta name="twitter:description" content="前段时间参加了阿里举办的一期阿里中间件性能大赛，初赛的信息详见链接，说简单点就是实现一个可以持久化的消息队列引擎，能够hold住亿万级别的消息不丢失，抵挡住消息洪峰。消息具有producer和comsumer两个角色，不同的comsumer可以订阅感兴趣的Topic消息，同一个topic的消息会发给所有对这个topic感兴趣的comsumer，同时每个comsumer可以拥有一个唯一的消息管道qu">
+<meta name="twitter:image" content="http://oaewlsdmg.bkt.clouddn.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20170707165412.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> 阿里中间件性能大赛初赛小结 | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                阿里中间件性能大赛初赛小结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2017-07-04T15:14:43+08:00" content="2017-07-04">
+              2017-07-04
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/07/04/alibaba-midware-contest-summary/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/04/alibaba-midware-contest-summary/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/07/04/alibaba-midware-contest-summary/" class="leancloud_visitors" data-flag-title="阿里中间件性能大赛初赛小结">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前段时间参加了阿里举办的一期阿里中间件性能大赛，初赛的信息详见<a href="https://tianchi.aliyun.com/competition/information.htm?spm=5176.100067.5678.2.4c5fd3bF2zHe1&amp;raceId=231600" target="_blank" rel="external">链接</a>，说简单点就是实现一个可以持久化的消息队列引擎，能够hold住亿万级别的消息不丢失，抵挡住消息洪峰。消息具有producer和comsumer两个角色，不同的comsumer可以订阅感兴趣的Topic消息，同一个topic的消息会发给所有对这个topic感兴趣的comsumer，同时每个comsumer可以拥有一个唯一的消息管道queue，producer发送到该管道queue里面的消息只能被该comsumer消费。在题目的限制条件下，要求设计出这么一个消息引擎，在完成功能的基础上，要求消息发送和读取均有较高的性能。<br><a id="more"></a><br>拿到题目的时候还是比较开心的，是一个我感兴趣的问题，以前了解过kafka，但是让自己设计毕竟还是头一遭，但是抱着试一试学习的心态便报名了，中间一段时间遇到了点事情，一度中止，这直接导致我在最后快写完的时候也快到截止日期了，最后还是坚持写完终结了各种调试bug，不过没赶到截止日期之前提交上去，于是也没能拿到啥成绩，但是本地本机测试的结果感觉不赖，更重要的是这个过程挖掘了很多以前不太清楚没有接触到的内容，还是收获挺大的，唯一的遗憾就是没能早点写完代码提交，这样也许就能进复赛了。<br>这里记录一些初赛的过程，权当是知识点的串联和归纳，如果有错误，欢迎指出。</p>
+<h3 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h3><p>再一开始没有任何想法的时候，借鉴了<a href="https://github.com/apache/incubator-rocketmq" target="_blank" rel="external">RocketMq</a>和<a href="https://github.com/tietang/fqueue" target="_blank" rel="external">fqueue</a>这两个软件设计的思路。最终设计如下：</p>
+<ul>
+<li>消息连续写入：考虑写消息的效率，将所有的消息连续写入到一个文件中，如果一个文件写满，再新建一个新文件。</li>
+<li>消息索引持久化：因为每条消息是发到topic或者queue中的，根据不同的topic或者queue，持久化该条消息的索引到索引文件中（这里即为，topic或者queue对应的索引文件）。</li>
+<li>消息读取：每个comsumer根据自己绑定的兴趣集合，轮询的读取最新的消息。<ul>
+<li>下一个要消费的消息索引的地址：通过特殊的map缓存数据结构记录每个consumer的topic或者queue兴趣集合中，下一个要消费的消息索引的地址。</li>
+<li>下一条消息的索引：根据下一条消息索引的地址获取消息索引，然后根据消息索引去消息文件中便可以读到对应文件位置上的消息。</li>
+</ul>
+</li>
+</ul>
+<p>这是整个消息存和取的一个大致的流程设计记录，个人觉得这么设计主要是出于连续写入一个文件的效率比随机写到各个文件的效率要高，但是却牺牲了读取的效率，读取的过程需要先读索引文件，再读消息文件。<br>从另外一个方向考虑，如果不按照连续存的方式，而是每个topic或者queue都建一个文件来存储消息，这样读取的时候就只用一次了，但是写起来的话落盘的速度可能会慢一些，但是二者方式综合起来孰优孰劣，没有做实际比较，这里也无法给出结论。</p>
+<h3 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h3><h4 id="消息编码"><a href="#消息编码" class="headerlink" title="消息编码"></a>消息编码</h4><p>消息有Headers、Properties、Body三个属性，其中Headers、Properties都是KV键值对，Body是字节数组，前两者的value分别有<code>long</code>、<code>double</code>、<code>String</code>、<code>int</code>四种数据类型，如果要保证消息的正确性，消息在进行存之前和取出消息之后，消息中KV中的value数据类型必须是要一致的。当时在旺旺群里讨论的同学，很多对数据类型持久化这一点如何实现很困惑，不过主要有两种声音，一种是直接用Java的原生的序列化接口，另外就是自己手动序列化。<br>我在思考时候，隐隐约约中想起了Redis的持久化实现原理，Redis本身也是KV键值存储，对于不同的数据类型的存储是天然支持，于是在查找了一些资料之后，确定了消息的编码格式，每条消息是按照下面的格式进行存储：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">+----------+-----------+----------+---------+-----+-----------+-------+-----+------------+----+</div><div class="line">| MSG_FLAG | HEAD_FLAG | LEN_TYPE | LEN_KEY | key | LEN_VALUE | value | ... | PROP_FLAG | ...|</div><div class="line">+----------+-----------+----------+---------+-----+-----------+-------+-----+------------+----+</div></pre></td></tr></table></figure></p>
+<p>部分代码实现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DefaultBytesMessage</span> <span class="keyword">implements</span> <span class="title">BytesMessage</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> VALUE_TYPE_INT=<span class="number">1</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> VALUE_TYPE_LONG=<span class="number">2</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> VALUE_TYPE_DOUBLE=<span class="number">3</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> VALUE_TYPE_STRING=<span class="number">4</span>;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_TYPE=<span class="number">1</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_KEY=<span class="number">1</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_VALUE=<span class="number">1</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_BODY=<span class="number">1</span>;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_INT=<span class="number">4</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_LONG=<span class="number">8</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> LEN_DOUBLE=<span class="number">8</span>;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> HEAD_FLAG=-<span class="number">1</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> PROP_FLAG=-<span class="number">2</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> BODY_FLAG=-<span class="number">3</span>;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span> MSG_FLAG=-<span class="number">4</span>;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> KeyValue headers = <span class="keyword">new</span> DefaultKeyValue();</div><div class="line">    <span class="keyword">private</span> <span class="keyword">byte</span>[] heads=&#123;&#125;;</div><div class="line">    <span class="keyword">private</span> KeyValue properties;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">byte</span>[] props=&#123;&#125;;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">byte</span>[] body=&#123;&#125;;</div><div class="line">    ...</div><div class="line">    <span class="function"><span class="keyword">public</span> Message <span class="title">putHeaders</span><span class="params">(String key, <span class="keyword">long</span> value)</span> </span>&#123;</div><div class="line">        headers.put(key, value);</div><div class="line">        appendHeader(key,AllUtils.longToBytes(value),VALUE_TYPE_LONG,LEN_LONG);</div><div class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">appendHeader</span><span class="params">(String key,<span class="keyword">byte</span>[] value,<span class="keyword">byte</span> typeOfvalue,<span class="keyword">int</span> lenOfvalue)</span></span>&#123;</div><div class="line">        <span class="comment">//拼接header的byte数组</span></div><div class="line">        <span class="keyword">if</span> (heads.length==<span class="number">0</span>)</div><div class="line">            heads=<span class="keyword">new</span> <span class="keyword">byte</span>[]&#123;HEAD_FLAG&#125;;</div><div class="line">        <span class="keyword">int</span> srcLen=heads.length;</div><div class="line">        <span class="keyword">byte</span>[] newArray = <span class="keyword">new</span> <span class="keyword">byte</span>[srcLen+LEN_TYPE+LEN_KEY+key.getBytes().length+LEN_VALUE+lenOfvalue];<span class="comment">//1字节表示value的数据类型，1字节表示key的长度，最后4字节表示固定的int值</span></div><div class="line"></div><div class="line">        System.arraycopy(heads,<span class="number">0</span>,newArray,<span class="number">0</span>,srcLen);</div><div class="line">        <span class="comment">//数据类型</span></div><div class="line">        <span class="keyword">int</span> index=srcLen;</div><div class="line">        newArray[index]=typeOfvalue;</div><div class="line">        <span class="comment">//key的长度</span></div><div class="line">        newArray[++index]=(<span class="keyword">byte</span>) key.getBytes().length;</div><div class="line">        <span class="comment">//key值</span></div><div class="line">        System.arraycopy(key.getBytes(), <span class="number">0</span>, newArray, ++index, key.getBytes().length);</div><div class="line">        index+=key.getBytes().length;</div><div class="line">        <span class="comment">//value长度</span></div><div class="line">        newArray[index]=(<span class="keyword">byte</span>) value.length;</div><div class="line">        <span class="comment">//value值</span></div><div class="line">        System.arraycopy(value, <span class="number">0</span>, newArray, ++index, lenOfvalue);</div><div class="line">        heads=newArray;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>编码存储之后，读取的时候再按照上述编码方式进行解码，便能还原整个消息。</p>
+<h4 id="大文件读写"><a href="#大文件读写" class="headerlink" title="大文件读写"></a>大文件读写</h4><p>java处理大文件，一般用BufferedReader,BufferedInputStream这类带缓冲的Io类，不过如果文件超大的话，更快的方式是采用MappedByteBuffer。MappedByteBuffer是java nio引入的文件内存映射方案，读写性能极高。下面这段话是引用《Java NIO》对内存映射文件的解释：</p>
+<blockquote>
+<p>传统的文件 I/O 是通过用户进程发布 read( )和 write( )系统调用来传输数据的。为了在内核空间<br>的文件系统页与用户空间的内存区之间移动数据，一次以上的拷贝操作几乎总是免不了的。这是因为，在文件系统页与用户缓冲区之间往往没有一一对应关系。但是，还有一种大多数操作系统都支持的特殊类型的 I/O操作，允许用户进程最大限度地利用面向页的系统 I/O 特性，并完全摒弃缓冲区拷贝。这就是内存映射 I/O。如下图所示：</p>
+</blockquote>
+<p><img src="http://oaewlsdmg.bkt.clouddn.com/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20170707165412.png" alt=""><br>这种映射文件的方案的设计确实看起来不错，在Java中创建一个MappedByteBuffer的示例代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MappedFile</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> String filename;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> filesize;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> FileChannel fileChannel;</div><div class="line">    <span class="keyword">private</span> File file;</div><div class="line">    <span class="keyword">private</span> MappedByteBuffer mappedByteBuffer;</div><div class="line"></div><div class="line">    <span class="comment">//下一节中提到的，用于对映射文件的刷新线程</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ExecutorService executor = Executors.newSingleThreadExecutor();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MappedFile</span><span class="params">(String filename, <span class="keyword">int</span> filesize)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">        init(filename,filesize);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">(String filename, <span class="keyword">int</span> filesize)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">        <span class="keyword">this</span>.filename = filename;</div><div class="line">        <span class="keyword">this</span>.filesize = filesize;</div><div class="line">        <span class="keyword">this</span>.file = <span class="keyword">new</span> File(filename);</div><div class="line">        ...</div><div class="line"></div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="comment">//=======创建映射文件 START========</span></div><div class="line">            <span class="keyword">this</span>.fileChannel = <span class="keyword">new</span> RandomAccessFile(<span class="keyword">this</span>.file, <span class="string">"rw"</span>).getChannel();</div><div class="line">            <span class="keyword">this</span>.mappedByteBuffer = <span class="keyword">this</span>.fileChannel.map(FileChannel.MapMode.READ_WRITE, <span class="number">0</span>, filesize);</div><div class="line">            <span class="comment">//=======创建映射文件 END========</span></div><div class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">            <span class="keyword">throw</span> e;</div><div class="line">        &#125; <span class="keyword">finally</span> &#123;</div><div class="line">            <span class="keyword">if</span> (!ok &amp;&amp; <span class="keyword">this</span>.fileChannel != <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">this</span>.fileChannel.close();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="comment">//执行线程任务</span></div><div class="line">        executor.execute(<span class="keyword">new</span> Sync());</div><div class="line">    &#125;</div><div class="line">    <span class="comment">//内部类的实现见下节中代码</span></div><div class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Sync</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;...&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>filechannel的map方法是将文件映射进内存中的一个区域，针对mappedByteBuffer的操作可以完全不用管文件，可以这么理解，操作mappedByteBuffer就是操作文件。在FileChannel.map方法的jdk源码中，有这么一句注释：</p>
+<blockquote>
+<p>A mapping, once established, is not dependent upon the file channel  that was used to create it.  Closing the channel, in particular, has no effect upon the validity of the mapping.</p>
+</blockquote>
+<p>意思就是映射文件一旦创建就跟原来创建它的filechannel没有任何关系了，即使关闭filechannel也对映射文件没有任何影响。<br>还有一句话关于MappedByteBuffer的应用场景：</p>
+<blockquote>
+<p>For most operating systems, mapping a file into memory is more expensive than reading or writing a few tens of kilobytes of data via the usual {@link #read read} and {@link #write write} methods.  From the standpoint of performance it is generally only worth mapping relatively large files into memory.</p>
+</blockquote>
+<p>翻译过来就是当数据量比较小的时候，比如几十M的数据量，相比较传统read和write的的io 方式，用映射文件是非常不划算的。因此从性能的角度考虑，在处理较大文件的时候才用映射文件的方案。</p>
+<h4 id="文件强制刷盘"><a href="#文件强制刷盘" class="headerlink" title="文件强制刷盘"></a>文件强制刷盘</h4><p>对MappedByteBuffer的修改并不会立刻反应到文件上，而只是停留在内存上，但是以防消息发生意外在内存中丢失，所以需要定期将文件的修改刷新到磁盘上。MappedByteBuffer中提供了force的方法，去完成这个操作。将<code>mappedByteBuffer.force();</code>这个操作封装在了一个线程当中，隔一段时间去强制刷盘一次。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Sync</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</div><div class="line">            <span class="keyword">if</span> (mappedByteBuffer != <span class="keyword">null</span>) &#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    mappedByteBuffer.force();</div><div class="line">                    Thread.sleep(<span class="number">500</span>);</div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                &#125;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                <span class="keyword">break</span>;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="压缩与解压缩"><a href="#压缩与解压缩" class="headerlink" title="压缩与解压缩"></a>压缩与解压缩</h4><p>这是跟几个参赛队友在一起讨论的时候他们的观点，但是并没有在我的实现中用到，但是我觉得是一个不错的想法，因为消息数据进行压缩之后会变少，这样既可以缓解IO的压力，同时也可以充分利用CPU的计算能力，是一个两全其美的方案。压缩过程示例代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">ByteBuffer byteBuffer = ByteBuffer.allocate(Size);</div><div class="line"><span class="keyword">byte</span>[] zipBuffer =  <span class="keyword">new</span> <span class="keyword">byte</span>[Size];</div><div class="line"></div><div class="line"><span class="comment">//java自带的压缩工具</span></div><div class="line">Deflater compresser =<span class="keyword">new</span> Deflater(Deflater.BEST_SPEED);</div><div class="line"><span class="comment">//设置压缩数据来源，byteBuffer是参考</span></div><div class="line">compresser.setInput(byteBuffer.array(),<span class="number">0</span>,byteBuffer.position());</div><div class="line"><span class="comment">//表示这次压缩以当前的输入内容结束</span></div><div class="line">compresser.finish();</div><div class="line"><span class="comment">//返回压缩结果的长度，zipBuffer存放压缩结果</span></div><div class="line"><span class="keyword">int</span> compressedDataLength = compresser.deflate(zipBuffer);</div><div class="line"><span class="comment">//reset重置，准备下次压缩</span></div><div class="line">compresser.reset();</div></pre></td></tr></table></figure></p>
+<p>解压缩的过程也很简单，示例代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">Inflater decompresser = <span class="keyword">new</span> Inflater();</div><div class="line"><span class="keyword">byte</span>[] byte4zip = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">2</span>*<span class="number">1024</span>*<span class="number">1024</span>];</div><div class="line"></div><div class="line">decompresser.setInput(byte4zip, <span class="number">0</span>, len);</div><div class="line"><span class="keyword">int</span> resultLength = decompresser.inflate(byte4message);</div><div class="line">decompresser.reset();</div></pre></td></tr></table></figure></p>
+<p>在准备的过程中，还是接触到了很多东西的，不过有些需要时间慢慢去弄明白，比如page cache是怎么回事，<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-directio/" target="_blank" rel="external">Linux的直接I/O</a>，<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-zerocopy1/index.html" target="_blank" rel="external">Linux的zerocopy（零拷贝）技术</a>等等，这些都是偏向操作系统层面的东西，当时在看这些东西的时候，想起了当时阿里实习面试的时候跟一个面试官聊天的内容，面试快结束的时候，面试官意味深长的说起，工作之后才发现当初没好好的学习计算机的一些基础课程和基础内容，比如操作系统里面的进程调度、文件系统，还有编译原理等等。</p>
+<p>感觉这些基础的东西，对技术的成长还是很关键的，那个面试当时举了个例子，说这些基础的知识和算法就是盖房子需要的一些基本知识，只要好好掌握了，盖什么高楼大厦都是一样的，融会贯通都能盖得起来。个人也有这种感觉，基础性的东西，带来的思考和认知层面的提升，虽不能立马反应到当前的实践中，但是却会不断的修炼和完善你的内功，产生潜移默化的提高，这一点我是相信的。</p>
+<p>比如今天看到的一篇关于语言学习的文章，文章标题很浮夸，但是在你已经掌握了一门语言，又想去学习另外一门语言的时候，这篇文章内容绝对值得一看的：<a href="http://www.yinwang.org/blog-cn/2017/07/06/master-pl" target="_blank" rel="external">如何掌握所有的程序语言-by 王垠</a>。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p>1、<a href="http://langgufu.iteye.com/blog/2107023" target="_blank" rel="external">java大文件读写操作</a><br>2、<a href="http://zheng12tian.iteye.com/blog/1100721" target="_blank" rel="external">Java NIO学习笔记——内存映射缓冲区</a></p>
+<p>-EOF-</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/open-messaging/" rel="tag">#open-messaging</a>
+          
+            <a href="/tags/aliware/" rel="tag">#aliware</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/23/Oracle-JDBC驱动的JAR包依赖问题/" rel="next" title="Oracle JDBC驱动的JAR包依赖问题">
+                <i class="fa fa-chevron-left"></i> Oracle JDBC驱动的JAR包依赖问题
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/08/Object根类方法探析/" rel="prev" title="Object根类方法探析">
+                Object根类方法探析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/04/alibaba-midware-contest-summary/"
+           data-title="阿里中间件性能大赛初赛小结" data-url="https://zouzls.github.io/2017/07/04/alibaba-midware-contest-summary/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">59</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#设计思路"><span class="nav-number">1.</span> <span class="nav-text">设计思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现细节"><span class="nav-number">2.</span> <span class="nav-text">实现细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#消息编码"><span class="nav-number">2.1.</span> <span class="nav-text">消息编码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#大文件读写"><span class="nav-number">2.2.</span> <span class="nav-text">大文件读写</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#文件强制刷盘"><span class="nav-number">2.3.</span> <span class="nav-text">文件强制刷盘</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#压缩与解压缩"><span class="nav-number">2.4.</span> <span class="nav-text">压缩与解压缩</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

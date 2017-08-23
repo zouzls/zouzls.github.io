@@ -1,0 +1,826 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="面试," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Gs Chen's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favorite.png?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="上午十点五十左右的时候，浙江杭州的电话打过来了，以我的经验判断应该是阿里的电话面试，于是，迅速收拾了一下桌面，找出了几张白纸和一支铅笔，因为是一个人在宿舍，就开了免提（其实可以顺便可以打开电话录音，后续问题忘记了可以回顾，当时我忘记了），大概问的问题如下，有些可能记得不太清楚了。">
+<meta name="keywords" content="面试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="阿里巴巴校招面试总结">
+<meta property="og:url" content="https://zouzls.github.io/2017/08/17/alibaba-interview-summary/index.html">
+<meta property="og:site_name" content="Gs Chen&#39;s blog">
+<meta property="og:description" content="上午十点五十左右的时候，浙江杭州的电话打过来了，以我的经验判断应该是阿里的电话面试，于是，迅速收拾了一下桌面，找出了几张白纸和一支铅笔，因为是一个人在宿舍，就开了免提（其实可以顺便可以打开电话录音，后续问题忘记了可以回顾，当时我忘记了），大概问的问题如下，有些可能记得不太清楚了。">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-08-23T07:11:11.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="阿里巴巴校招面试总结">
+<meta name="twitter:description" content="上午十点五十左右的时候，浙江杭州的电话打过来了，以我的经验判断应该是阿里的电话面试，于是，迅速收拾了一下桌面，找出了几张白纸和一支铅笔，因为是一个人在宿舍，就开了免提（其实可以顺便可以打开电话录音，后续问题忘记了可以回顾，当时我忘记了），大概问的问题如下，有些可能记得不太清楚了。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: 'Author'
+    }
+  };
+</script>
+
+  <title> 阿里巴巴校招面试总结 | Gs Chen's blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?44cb51503f54763b661c4ae7590d184f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Gs Chen's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-tags fa-fw"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-recommends">
+          <a href="/recommends" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            Recommend
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-user fa-fw"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                阿里巴巴校招面试总结
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2017-08-17T14:22:17+08:00" content="2017-08-17">
+              2017-08-17
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/LifeEssay/" itemprop="url" rel="index">
+                    <span itemprop="name">LifeEssay</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/08/17/alibaba-interview-summary/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/08/17/alibaba-interview-summary/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/08/17/alibaba-interview-summary/" class="leancloud_visitors" data-flag-title="阿里巴巴校招面试总结">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上午十点五十左右的时候，浙江杭州的电话打过来了，以我的经验判断应该是阿里的电话面试，于是，迅速收拾了一下桌面，找出了几张白纸和一支铅笔，因为是一个人在宿舍，就开了免提（其实可以顺便可以打开电话录音，后续问题忘记了可以回顾，当时我忘记了），大概问的问题如下，有些可能记得不太清楚了。<br><a id="more"></a></p>
+<h3 id="一面问题"><a href="#一面问题" class="headerlink" title="一面问题"></a>一面问题</h3><ol>
+<li>自我介绍一下。</li>
+<li>大概做了哪些项目，印象比较深的，可以说一下。</li>
+<li>项目里面用了哪些框架？（后续就根据项目框架提问）</li>
+<li>为什么用springboot？（开发效率较高，免去复杂的配置，开箱即用）</li>
+<li>谈谈对Redis的理解？(基于内存的K-V存储)</li>
+<li>为什么Redis效率比较高？（数据在内存，读写效率高，map数据结构读写时间复杂度较低）</li>
+<li>对memcached有了解吗？（处于跟Redis同一级别的缓存数据库）</li>
+<li>Redis一般用于什么场景下？（数据缓存，说了一个秒杀场景，读多写少，将商品的数据信息放在缓存中，能很大程度上减少数据库层面的访问压力。）</li>
+<li>Redis是怎么实现分布式锁的？（这个我忘了，但是我记得分布式锁有很多种实现方式，比如传统方式数据库实现、再就是用zookeeper实现、但是redis不记得了。）</li>
+<li>既然提到了zookeeper，说说zookeeper是怎么实现领导人选举的？（这个说的不不怎么好，我把Raft协议中的Leader选举说了下，不过zookeeper是改进了paxos协议，然后自己实现了ZAB协议）</li>
+<li>Spring用了多长时间了，了解过Spring的源码吗？（用过，研究过Spring的启动流程，IOC，AOP特性等等）</li>
+<li>Spring的bean是怎么创建的？如果用注解方式呢？（这个回答的有点糙）</li>
+<li>Spring的AOP是什么？怎么实现的？（面向切面编程，说了一下AOP场景比如事务管理等，实现就是动态代理方式，有JDK代理和cjlib代理）</li>
+<li>在什么情况下用cjlib代理？（当目标对象实现了接口的时候默认选择JDK代理，当目标对象没有实现任何接口的时候就选择cjlib代理）</li>
+<li>有用过事务吗？（突然说事务，不清楚是什么事务，后面知道是Spring中事务，说用过，如果需要某一组操作具有原子性，就用注解的方式开启事务）在一个事务里面调用另外一个方法会怎样？如果另外一个方法也开启事务，两个方法是共用一个事务吗？独立事务怎么搞？（卒，这部分真不清楚，说不太清楚独立事务，项目里面用到的事务偏简单）</li>
+<li>还用过什么框架？mybatis用过吗？谈谈对mybatis的认识？（就是个orm的对象映射框架）</li>
+<li>开始了第二个项目，你在这个项目里面担任什么角色？（项目组长）做了哪些工作？项目结构是怎么样的？有多大的访问量？（没上线，不知道）？你是如何提高项目的性能和拓展性的？（性能真没有，拓展性回答了一些）</li>
+<li>如果让你设计一个高性能的web，你怎么设计？（CDN、负载均衡、分布式缓存）</li>
+<li>如何解决分布式缓存中数据一致性的问题？如果每台服务器的缓存都是在本地怎么解决缓存的一致性？（借用了数据库复制的思路，一个可以对缓存操作的日志进行同步，然后收到同步日志的服务器再对操作日志进行回放；二个可以直接对缓存当前的数据进行复制。）</li>
+<li>什么是session？怎么管理session？</li>
+<li>好像还有个问题忘记写了，就是知道ThreadLoacal吗？（每个线程可以通过ThreadLocal维护自己的一个数据副本，而不进行共享，取出数据的时候通过线程的名字，内部实际上是一个map的结构。）那这个线程结束时候内存怎么释放呢？（&amp;*……￥#。。。忘记了，这个没注意看）</li>
+<li>算法有了解吗？（知道一些常用算法）二叉树遍历方式？说说中序遍历？红黑树了解吗？红黑树有哪些应用场景？（JDK中的HashMap、TreeMap等等）二叉树一共799个结点一共有多少叶子节点？快排的时间复杂度？（最好和最差的情况）</li>
+<li>以后的职业生涯怎么想？最近在看什么书？这段时间在干嘛？（准备秋招）还有没有你觉得漏掉的最能体现你能力的地方没有面试到？（。。。）</li>
+<li>你有没有什么问题问我？（评价下面试咋样，我好继续改善）</li>
+</ol>
+<p>一面面了将近一个小时，问了后面是否还有面试，说是保持电话畅通，还有面试。</p>
+<h3 id="二面问题"><a href="#二面问题" class="headerlink" title="二面问题"></a>二面问题</h3><ol>
+<li>比较基础的问题，什么是多态？什么是重载？什么是重写？（多态：也叫后期绑定、动态绑定，分离了做什么和怎么做，将接口和实现分离开来，这样在写代码的时候可以只考虑与基类打交道了，这样也方便了程序拓展。重载：经常老是潜意识当成了重写，重载是以参数列表和返回值区分重载方法。重写：子类对父类方法的重新实现。）</li>
+<li>类之间有哪些关系？有没有用UML画过类图？（这个我应该回答错了，我说了继承和内部类）</li>
+<li>mvc是什么？（面试的时候会担心专业术语讲错，我当时说的这是一种架构模式，应该没说错，model-view-controller）常见的有哪些框架是这种架构模式的？（SpringMVC、Struts）</li>
+<li>看过Spring吗？有没有看过Spring的源码？看了多少？（启动流程、IOC）讲一讲源码是怎么实现的？</li>
+<li>Spring中有哪些类是继承了webApplicationContext？（没记错应该是这个问题，webApplicationContext这是一个接口，有两个实现类，一个是Spring默认的XmlWebApplicationContext，还有一个是ClassPathXmlApplicationContext，可以通过后者自己加载Spring的配置文件）</li>
+<li>有什么方式可以通过Spring初始化的bean拿到这个bean的容器？（好像没用过&amp;……%）</li>
+<li>==和equal的区别？（前者是判断引用是否相当，也可以认为是对象的内存地址；后者在Object对象中默认的实现也是判断引用，但是可以进行覆盖重写，判断对象的属性内容是否相等）</li>
+<li>get请求和post请求的有哪些区别？（可以参考这个<a href="http://www.cnblogs.com/hyddd/archive/2009/03/31/1426026.html" target="_blank" rel="external">浅谈HTTP中Get与Post的区别</a>）get和post的携带参数的数据量大小知道吗？</li>
+<li>集合类有用到过哪些，了解吗？说说List和Set的区别，分别是怎么实现的？</li>
+<li>Set中是怎么保证key的唯一性的？（set其实就是map中key的集合，说了先判断hashcode，看是否冲突，冲突了再判断equal。。。）那到底是怎么来确定唯一性？（。。。又回到了equal和hashcode，其实是想让我回答，是通过hashcode和equal二者一起判断的，因为具有同样的hashcode并不能说明key对象是相等的，因为不同的对象可能会有相同的hashcode。）</li>
+<li>线程安全是什么意思？（周志明老师那本jvm书籍里面对线程安全的理解，觉得挺好，一个线程访问一个对象时或者说调用一个对象的行为方法时，不需要额外的同步方法，就说这个对象是线程安全的。我当时就这么说，面试好像不太满意。。。）那你举个线程不安全的例子？（说了一下Servlet中代码不安全的问题，对于共享变量如果不进行同步的话，就会出现线程不安全。）再具体一点，怎么不安全了？（我就说假如是个访问次数统计，两个线程同时读取到了一个相同的值，然后执行+1操作，再写回主内存的共享变量，这个时候就会出现数据不一致紊乱。）那怎么解决呢？（变量用volitle修饰或者方法内部的关键操作用同步代码块）</li>
+<li>了解过什么算法吗？（常用的算法都了解一些，比如快排序。。。，还没说完）讲一下快排的代码实现过程？（balabala。。。）时间复杂度咋样的？</li>
+<li>知道哪些设计模式？项目或者框架中用到了哪些设计模式？（代理模式-Spring-AOP-JDK代理和cglib代理）？cglib是什么东东？（好像是一个第三方的jar包%……&amp;，当时不太确定，后面查了一下，简单来说，就是一个代码生成类库。它可以在运行时候动态是生成某个类的子类。）</li>
+<li>最近在看什么东西？（Zookeeper）为什么要看这个？看了多少？（主要的引用场景，以及ZAB协议）</li>
+<li>谈谈你的项目架构？RESTful接口是什么？走的是http协议不安全怎么办？（自己设计了密钥对，进行验证）</li>
+<li>平时学习过程有没有遇到什么困难印象很深刻？（说了一下之前有段时间对数据库好奇，挖了一下levelDB的源码，这个过程踩了很多坑）那你是怎么解决的？（Google，呢喃了一句，说感觉没有啥问题是解决不了的）</li>
+</ol>
+<p>二面结束了，总的来说二面问的基础东西比较多，感觉项目和基础都要重视，两手抓。</p>
+
+      
+    </div>
+    
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/面试/" rel="tag">#面试</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/06/SpringInit/" rel="next" title="漫谈Spring的启动与初始化（二）">
+                <i class="fa fa-chevron-left"></i> 漫谈Spring的启动与初始化（二）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/08/23/ThreadLocal/" rel="prev" title="简析ThreadLocal">
+                简析ThreadLocal <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/08/17/alibaba-interview-summary/"
+           data-title="阿里巴巴校招面试总结" data-url="https://zouzls.github.io/2017/08/17/alibaba-interview-summary/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.png"
+               alt="Gs Chen" />
+          <p class="site-author-name" itemprop="name">Gs Chen</p>
+          <p class="site-description motion-element" itemprop="description">Widen grain , Highten wall</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">59</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">categories</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zouzls" target="_blank">
+                  
+                    <i class="fa fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/2109551834?is_all=1" target="_blank">
+                  
+                    <i class="fa fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/zouzls/" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  douban
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/chen-gong-shuai" target="_blank">
+                  
+                    <i class="fa fa-globe"></i>
+                  
+                  zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        <div class="links-of-blogroll motion-element">
+          
+            <div class="links-of-blogroll-title">Links</div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://calvin1978.blogcn.com/" target="_blank">江南白衣</a>
+                </li>
+              
+            </ul>
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一面问题"><span class="nav-number">1.</span> <span class="nav-text">一面问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二面问题"><span class="nav-number">2.</span> <span class="nav-text">二面问题</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Gs Chen</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+  &nbsp&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp&nbsp<span id="busuanzi_container_site_pv">您是本站第 <span id="busuanzi_value_site_uv"></span>位访客</span>
+</div>
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+
+  
+
+
+
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=0.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zouzls"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '/js/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("EunLkIm0xOFA4ygpTWAXwVKo-gzGzoHsz", "Bj4JrGlyqyFuK27yOwt8eDw8");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -68,8 +68,8 @@
 <meta property="og:description" content="最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image002.jpg">
-<meta property="og:image" content="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image004.jpg">
-<meta property="og:updated_time" content="2017-08-06T16:23:49.000Z">
+<meta property="og:image" content="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image003.jpg">
+<meta property="og:updated_time" content="2017-08-20T08:02:58.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="漫谈Spring的启动与初始化（一）">
 <meta name="twitter:description" content="最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指">
@@ -318,7 +318,7 @@
         <p>最近帮实验室同学调了个BUG，项目中也要用到Spring，想想虽然之前也有看过一些关于Spring容器的知识，但是有些东西却已经逐渐生疏了或者是模糊了，比如最常见的问题，Spring的启动流程是什么样的？这个问题,我想即使是经常做web开发的也不见得能完完整整的回答出来，于是结合网上资料再配合Spring源码，决定再梳理一下Spring容器是如何启动并初始化的，如果有不正确的地方，希望路过的可以指出。</p>
 <h3 id="从Tomcat启动开始"><a href="#从Tomcat启动开始" class="headerlink" title="从Tomcat启动开始"></a>从Tomcat启动开始</h3><p>查阅了大部分网上的文章，基本90%的都是直接从ContextLoaderListener这个监听器开始谈起，说ContextLoaderListener监听到了ServletContext的启动然后balabala开始启动容器了，但是我想知道监听器是什么时候来的啊，一切总是有个开始的，不能说有个监听器就有个监听器了吧。<br><a id="more"></a></p>
 <h4 id="初始Tomcat的基本结构"><a href="#初始Tomcat的基本结构" class="headerlink" title="初始Tomcat的基本结构"></a>初始Tomcat的基本结构</h4><p>因为web最终是运行在类似于Tomcat这种web容器里面的，它对于web的生命周期应该有着直接的关系，所以我决定从Tomcat开始看起，下面是Tomcat的容器模型：<br><img src="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image002.jpg" alt=""><br><strong>从上图可以看出 Tomcat 的容器分为四个等级，真正管理 Servlet 的容器是 Context 容器，一个 Context 对应一个 Web 工程。</strong>尤其是后面一句话，一个 Context 对应一个 Web 工程，所以我们在Tomcat根目录的webapps文件夹路径下面经常会看到除了我们自己部署的web，还有若干其他Tomcat自带的web，不同的web工程都会对应在Tomcat里面的context容器。</p>
-<h4 id="Tomcat的启动"><a href="#Tomcat的启动" class="headerlink" title="Tomcat的启动"></a>Tomcat的启动</h4><p>先看这张图，Tomcat主要类的启动时序图：<br><img src="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image004.jpg" alt=""><br>可以看到Tomcat的启动是从顶层开始一直到到Engine到Host再到StandardContext（这里的context我可以理解为就是对应每个web工程的容器了），之前看过一些Tomcat的源码，Tomcat是采用了一种观察者模式的设计方式，所有的容器都会继承 Lifecycle 接口，它管理容器的整个生命周期，所有容器的的修改和状态的改变都会由它去通知已经注册的观察者（Listener）。不清楚的可以参考<a href="http://zouzls.github.io/2016/07/05/Tomcat%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86/">Tomcat生命周期管理</a>。<br>说了这么多还没到我们配置在web.xml里面的监听器，快了。当 Context 容器初始化状态设为 init 时，添加在 Context 容器的 Listener 将会被调用。ContextConfig 继承了 LifecycleListener 接口，ContextConfig 类会负责整个 Web 应用的配置文件的解析工作。</p>
+<h4 id="Tomcat的启动"><a href="#Tomcat的启动" class="headerlink" title="Tomcat的启动"></a>Tomcat的启动</h4><p>先看这张图，Tomcat主要类的启动时序图：<br><img src="https://www.ibm.com/developerworks/cn/java/j-lo-servlet/image003.jpg" alt=""><br>可以看到Tomcat的启动是从顶层开始一直到到Engine到Host再到StandardContext（这里的context我可以理解为就是对应每个web工程的容器了），之前看过一些Tomcat的源码，Tomcat是采用了一种观察者模式的设计方式，所有的容器都会继承 Lifecycle 接口，它管理容器的整个生命周期，所有容器的的修改和状态的改变都会由它去通知已经注册的观察者（Listener）。不清楚的可以参考<a href="http://zouzls.github.io/2016/07/05/Tomcat%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%AE%A1%E7%90%86/">Tomcat生命周期管理</a>。<br>说了这么多还没到我们配置在web.xml里面的监听器，快了。当 Context 容器初始化状态设为 init 时，添加在 Context 容器的 Listener 将会被调用。ContextConfig 继承了 LifecycleListener 接口，ContextConfig 类会负责整个 Web 应用的配置文件的解析工作。</p>
 <h4 id="web应用的初始化"><a href="#web应用的初始化" class="headerlink" title="web应用的初始化"></a>web应用的初始化</h4><p>Web 应用的初始化工作是在 ContextConfig 的 configureStart 方法中实现的，应用的初始化主要是要解析 web.xml 文件，这个文件描述了一个 Web 应用的关键信息，也是一个 Web 应用的入口。<strong>web.xml 文件中的各个配置项将会被解析成相应的属性保存在 WebXml 对象中，接下去将会将 WebXml 对象中的属性设置到 Context 容器中，这里包括创建 Servlet 对象、filter、listener 等等。</strong><br>所有 web.xml 属性都被解析到 Context 中，所以说 Context 容器才是真正运行 Servlet 的 Servlet 容器。一个 Web 应用对应一个 Context 容器，容器的配置属性由应用的 web.xml 指定，这样我们就能理解 web.xml 到底起到什么作用了。</p>
 <h3 id="再谈Spring的启动"><a href="#再谈Spring的启动" class="headerlink" title="再谈Spring的启动"></a>再谈Spring的启动</h3><h4 id="启动Spring之前"><a href="#启动Spring之前" class="headerlink" title="启动Spring之前"></a>启动Spring之前</h4><p>从上面的流程中，我们知道web.xml配置的最常见的ContextLoaderListener监听器是从Tomcat启动时候创建的。根据以上Tomcat的启动背景，我们先尝试简单梳理从Tomcat读取web.xml配置文件到启动Spring的一系列流程。</p>
 <ol>
@@ -471,7 +471,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">57</span>
+              <span class="site-state-item-count">59</span>
               <span class="site-state-item-name">posts</span>
             </a>
           </div>
@@ -488,7 +488,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-count">37</span>
                 <span class="site-state-item-name">tags</span>
               </a>
             </div>
