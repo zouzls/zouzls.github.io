@@ -59,19 +59,19 @@
 
 
 
-<meta name="description" content="cat   查看文件内容举例：12➜  ~ cat test.txthello cat ！">
+<meta name="description" content="cat   查看文件内容举例：查看文件名为test.txt的内容12➜  ~ cat test.txthello cat ！">
 <meta name="keywords" content="linux">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux常用命令小结">
 <meta property="og:url" content="https://zouzls.github.io/2017/09/07/Linux-command/index.html">
 <meta property="og:site_name" content="Gs Chen&#39;s blog">
-<meta property="og:description" content="cat   查看文件内容举例：12➜  ~ cat test.txthello cat ！">
+<meta property="og:description" content="cat   查看文件内容举例：查看文件名为test.txt的内容12➜  ~ cat test.txthello cat ！">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="http://oaewlsdmg.bkt.clouddn.com/1DD13B5D-2088-4367-9AA2-BF4FB1B6BE72.png">
-<meta property="og:updated_time" content="2017-09-07T13:51:24.000Z">
+<meta property="og:updated_time" content="2017-09-07T14:30:22.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Linux常用命令小结">
-<meta name="twitter:description" content="cat   查看文件内容举例：12➜  ~ cat test.txthello cat ！">
+<meta name="twitter:description" content="cat   查看文件内容举例：查看文件名为test.txt的内容12➜  ~ cat test.txthello cat ！">
 <meta name="twitter:image" content="http://oaewlsdmg.bkt.clouddn.com/1DD13B5D-2088-4367-9AA2-BF4FB1B6BE72.png">
 
 
@@ -315,35 +315,39 @@
 
       
         <ul>
-<li>cat   查看文件内容<br>举例：<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">➜  ~ cat test.txt</div><div class="line">hello cat ！</div></pre></td></tr></table></figure>
+<li>cat   查看文件内容<br>举例：查看文件名为test.txt的内容<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">➜  ~ cat test.txt</div><div class="line">hello cat ！</div></pre></td></tr></table></figure>
 </li>
 </ul>
 <a id="more"></a>
 <ul>
-<li><p>iostat  检测系统io状态（一般指磁盘的io情况）<br>举例：</p>
+<li><p>iostat  检测系统io状态（一般指磁盘的io情况）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">➜  ~ iostat</div><div class="line">              disk0       cpu    load average</div><div class="line">    KB/t  tps  MB/s  us sy id   1m   5m   15m</div><div class="line">   32.46    4  0.13   6  4 90  1.13 1.60 1.85</div></pre></td></tr></table></figure>
 </li>
-<li><p>netstat  查看端口占用情况<br>举例：</p>
+<li><p>netstat  查看端口占用情况</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">➜  ~ netstat</div><div class="line">Active Internet connections</div><div class="line">Proto Recv-Q Send-Q  Local Address          Foreign Address        (state)</div><div class="line">tcp4       0      0  172.16.113.101.63732   121.195.178.52.imap    ESTABLISHED</div><div class="line">tcp4       0      0  172.16.113.101.63730   121.195.178.52.imap    ESTABLISHED</div><div class="line">tcp4       0      0  172.16.113.101.63729   58.205.220.30.https    ESTABLISHED</div></pre></td></tr></table></figure>
 </li>
-<li><p>ps  用来显示当前运行的进程（经常结合grep使用）<br>举例：</p>
+<li><p>ps  用来显示当前运行的进程（经常结合grep使用）</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">➜  ~ ps</div><div class="line"> PID TTY           TIME CMD</div><div class="line"> 4249 ttys000    0:00.02 /Applications/iTerm.app/Contents/MacOS/iTerm2 --server login -fp zouzls</div><div class="line"> 4251 ttys000    0:00.12 -zsh</div></pre></td></tr></table></figure>
 </li>
 <li><p>grep    过滤打印匹配的行<br>举例：显示当前运行的Java进程</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">➜  ~ ps -ax | grep java</div></pre></td></tr></table></figure>
 </li>
-<li><p>top  查看CPU当前的负载<br>举例：</p>
+<li><p>top  查看CPU当前的负载</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">➜  ~ top</div></pre></td></tr></table></figure>
 </li>
 </ul>
 <p><img src="http://oaewlsdmg.bkt.clouddn.com/1DD13B5D-2088-4367-9AA2-BF4FB1B6BE72.png" alt=""></p>
 <ul>
-<li><p>touch 创建文件<br>举例：</p>
+<li><p>touch 创建文件<br>举例：创建文件名为test.txt的文件</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">➜  ~ touch test.txt</div></pre></td></tr></table></figure>
 </li>
-<li><p>chmod 修改文件权限<br>举例：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">➜  ~ chmod 777 test.txt（一个文件的最高权限应该就是这个了，可以认为是所有用户都可以修改、读、执行这个文件）</div></pre></td></tr></table></figure></li>
+<li><p>chmod 修改文件权限</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">➜  ~ chmod 777 test.txt</div></pre></td></tr></table></figure>
+</li>
 </ul>
+<blockquote>
+<p>备注：777,表示权限的参数代码，一个文件的最高权限应该就是这个了，可以认为是所有用户都可以修改、读、执行这个文件</p>
+</blockquote>
 
       
     </div>
