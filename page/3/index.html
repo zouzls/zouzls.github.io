@@ -239,6 +239,137 @@
             
               
                 
+                <a class="post-title-link" href="/2017/02/26/深入理解JVM之线程安全的实现方法（七）/" itemprop="url">
+                  深入理解JVM之线程安全的实现方法（七）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">Posted on</span>
+            <time itemprop="dateCreated" datetime="2017-02-26T13:34:24+08:00" content="2017-02-26">
+              2017-02-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index">
+                    <span itemprop="name">JVM</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2017/02/26/深入理解JVM之线程安全的实现方法（七）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/26/深入理解JVM之线程安全的实现方法（七）/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2017/02/26/深入理解JVM之线程安全的实现方法（七）/" class="leancloud_visitors" data-flag-title="深入理解JVM之线程安全的实现方法（七）">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">visitors </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p>这篇文章算是对前面几篇文章的一个小结，从<a href="http://zouzls.github.io/2016/10/17/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM%E4%B9%8BJMM%EF%BC%88%E4%B8%89%EF%BC%89/">Java内存模型</a>是如何来保证并发操作过程中的原子性、可见性以及有序性，到<a href="http://zouzls.github.io/2017/02/22/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM%E4%B9%8B%E5%85%88%E8%A1%8C%E5%8F%91%E7%94%9F%E5%8E%9F%E5%88%99%EF%BC%88%E5%9B%9B%EF%BC%89/">Happes-Before原则</a>是如何保证内存模型中操作的有序性，再到我们特意分析了<a href="http://zouzls.github.io/2017/02/22/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM%E4%B9%8Bvolatile%E5%8F%98%E9%87%8F%EF%BC%88%E4%BA%94%EF%BC%89/">volatile</a>和<a href="http://zouzls.github.io/2017/02/25/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3JVM%E4%B9%8Bsynchronized%E5%92%8CLock%EF%BC%88%E5%85%AD%EF%BC%89/">synchronized</a>这两个JVM内置的实现同步机制关键字，在内存模型中的作用和他们的区别，但是这中间总是离不开「线程安全」几个字，那么实现线程安全的方法究竟有哪些，本文试图做一下总结。</p>
+<h3 id="线程安全的概念"><a href="#线程安全的概念" class="headerlink" title="线程安全的概念"></a>线程安全的概念</h3><p>周老师认为《Java Concurrency In Practice》的作者Brian Goetz对线程安全有个比较好的定义，如下：<br><strong>当多个线程访问一个对象的时候，如果不用考虑这些线程在运行时环境下的调度和交替执行，也不需要进行额外的同步，或者在调用方进行任何其他的协调操作，调用这个对象的行为都可以获得正确的结果，那这个对象就是线程安全的。</strong><br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2017/02/26/深入理解JVM之线程安全的实现方法（七）/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+    
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/2017/02/25/深入理解JVM之synchronized和Lock（六）/" itemprop="url">
                   深入理解JVM之synchronized和Lock（六）
                 </a>
@@ -1393,137 +1524,6 @@
 
 
     
-      
-
-  
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/01/05/Java8集合系列之HashMap（四）/" itemprop="url">
-                  Java8集合系列之HashMap（四）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">Posted on</span>
-            <time itemprop="dateCreated" datetime="2017-01-05T22:46:13+08:00" content="2017-01-05">
-              2017-01-05
-            </time>
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-              
-                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/Java-Collection/" itemprop="url" rel="index">
-                    <span itemprop="name">Java Collection</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="/2017/01/05/Java8集合系列之HashMap（四）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/01/05/Java8集合系列之HashMap（四）/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-             <span id="/2017/01/05/Java8集合系列之HashMap（四）/" class="leancloud_visitors" data-flag-title="Java8集合系列之HashMap（四）">
-               &nbsp; | &nbsp;
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               <span class="post-meta-item-text">visitors </span>
-               <span class="leancloud-visitors-count"></span>
-              </span>
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>Map数据结构相比较List而言无疑在底层实现变的更复杂了一些，Map系列的源码学习尝试从最基本最常用的HashMap成员开始。其中设计思路部分取自于JDK1.8HashMap源码中英文的翻译，这部分内容感觉对HashMap的源码整体实现的学习和理解还是有一定帮助，值得一看。</p>
-<h3 id="HashMap-设计思路"><a href="#HashMap-设计思路" class="headerlink" title="HashMap 设计思路"></a>HashMap 设计思路</h3><h4 id="初试容量和负载因子"><a href="#初试容量和负载因子" class="headerlink" title="初试容量和负载因子"></a>初试容量和负载因子</h4><p>HashMap基于哈希表的Map接口实现，<strong>并允许null键和null值</strong>。 （HashMap类大致相当于Hashtable，除了它是不同步的并允许null）。这个类不保证映射的顺序。这个实现提供了基本操作（get和put）的恒定时间性能，假设散列函数在桶中正确地分散条目。 对集合视图的迭代时间与HashMap实例的容量和键值映射的数量相关。 因此，如果要求迭代性能较好，不要将初始容量设置得太高（或负载系数太低），这一点非常重要。<br>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2017/01/05/Java8集合系列之HashMap（四）/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-    
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1569,7 +1569,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">59</span>
+              <span class="site-state-item-count">60</span>
               <span class="site-state-item-name">posts</span>
             </a>
           </div>
@@ -1577,7 +1577,7 @@
           
             <div class="site-state-item site-state-categories">
               
-                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">categories</span>
               
             </div>
@@ -1586,7 +1586,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-count">38</span>
                 <span class="site-state-item-name">tags</span>
               </a>
             </div>
