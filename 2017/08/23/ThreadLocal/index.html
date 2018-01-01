@@ -67,7 +67,7 @@
 <meta property="og:site_name" content="Gs Chen&#39;s blog">
 <meta property="og:description" content="看到ThreadLocal的时候多少总会跟线程安全关联在一起，因为在线程安全中涉及到共享数据，但是如果不使用共享数据如何来保证线程安全呢？网上有文章分析说，ThreadLocal的出现是为了从另外的一个角度来解决线程安全的问题，以空间换时间，每个线程拥有一份属于自己的数据副本，线程在运行过程中彼此不互相打扰，进水不犯河水。这是对ThreadLocal的一个初步感性的认识，但是真正去理解的时候，又发">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2017-08-23T14:26:36.000Z">
+<meta property="og:updated_time" content="2017-09-10T02:49:47.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="简析ThreadLocal">
 <meta name="twitter:description" content="看到ThreadLocal的时候多少总会跟线程安全关联在一起，因为在线程安全中涉及到共享数据，但是如果不使用共享数据如何来保证线程安全呢？网上有文章分析说，ThreadLocal的出现是为了从另外的一个角度来解决线程安全的问题，以空间换时间，每个线程拥有一份属于自己的数据副本，线程在运行过程中彼此不互相打扰，进水不犯河水。这是对ThreadLocal的一个初步感性的认识，但是真正去理解的时候，又发">
@@ -334,7 +334,7 @@
 <p>以上两小节就是关于get方法的这个流程中主要代码实现。</p>
 <h4 id="set方法"><a href="#set方法" class="headerlink" title="set方法"></a>set方法</h4><p>set方法就更简单了，跟<code>setInitialValue</code>相比就是自己手动设置线程本地变量，而不是通过默认值的方式。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">set</span><span class="params">(T value)</span> </span>&#123;</div><div class="line">    Thread t = Thread.currentThread();</div><div class="line">    ThreadLocalMap map = getMap(t);</div><div class="line">    <span class="keyword">if</span> (map != <span class="keyword">null</span>)</div><div class="line">        map.set(<span class="keyword">this</span>, value);</div><div class="line">    <span class="keyword">else</span></div><div class="line">        createMap(t, value);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <h3 id="关于ThreadLocal是否存在内存泄漏问题"><a href="#关于ThreadLocal是否存在内存泄漏问题" class="headerlink" title="关于ThreadLocal是否存在内存泄漏问题"></a>关于ThreadLocal是否存在内存泄漏问题</h3><p>从上面源码分析中，我们大致可以看出引用关系，当前线程&gt;ThreadLocalMap&gt;table&gt;Entry&gt;弱引用ThreadLocal和强引用value。当线程运行结束的时候，线程对象会被回收，线程内部的ThreadLocalMap也会被回收，table和Entry更不用说的，也会被回收，因此value回收。<br>但是也有一种情况值得考虑，就是当时线程池的时候，这个时候线程池里面的线程有的是经常活跃的，就不能这么来了，具体可以参考<a href="http://mahl1990.iteye.com/blog/2347932" target="_blank" rel="external">这篇文章</a>，博主做了一个关于用线程池的测验，就是在最后不使用线程本地变量的时候，通过ThreadLocal的remove方法清除变量，这样也就解决了线程池可能存在的内存泄漏问题。</p>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>其实问题也没我们想象的那么复杂，我们使用线程本地变量就是跟ThreadLocal打交道就行了，至于ThreadLocalMap只是每个线程Thread内部维护的一个map属性。<br>内部get实现的时候就是通过当前线程拿到自己的map，然后以ThreadLocal为key值拿到属于自己线程的value值，就这样了。</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>其实问题也没我们想象的那么复杂，我们使用线程本地变量就是跟ThreadLocal打交道就行了，至于ThreadLocalMap只是每个线程Thread内部维护的一个map属性。<br>内部get实现的时候就是通过当前线程拿到自己的map，然后以ThreadLocal的实例为key值拿到属于自己线程的value值，就这样了。</p>
 <p>-EOF-</p>
 
       
@@ -470,7 +470,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">60</span>
+              <span class="site-state-item-count">62</span>
               <span class="site-state-item-name">posts</span>
             </a>
           </div>
@@ -591,7 +591,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
